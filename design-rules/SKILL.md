@@ -54,6 +54,20 @@ These are the rules arnetz.design is built to. Follow them when you build, and c
 - No made-up numbers. Only show figures that were measured, and say what was measured.
 - When a fact is missing, leave a visible placeholder. Never invent one.
 
+## Make it more Scandinavian
+
+When asked to make something "more Scandinavian" (or calmer, or more Nordic), make one pass with these moves, then run the checks below:
+
+- **Lagom.** Remove one thing from every group: a button, a line of copy, an icon, a border. Stop when nothing else can go without losing meaning.
+- **Light and air.** Step spacing up one level (40 becomes 80, 80 becomes 120). Let one element have a whole row to itself.
+- **Function first.** Every element earns its place by doing something. Decoration that does nothing goes.
+- **Honest materials.** Use real photos, real data and real words. No fake depth, glows, glass or gradients unless they say something about state.
+- **Quiet colour.** Warm the neutrals slightly (paper, not pure white; soft black, not pure black). The accent appears once per screen at most.
+- **Plain, warm words.** Use short sentences in the second person, with no exclamation marks and no hype. Say what happens, then stop.
+- **Slow, soft motion.** Make transitions a little longer and gentler. Nothing bounces.
+
+Say which moves you applied, and what you removed.
+
 ## Before you call it done
 
 1. Search the styles for any `font-size` or `font-weight` outside the scale, any colour that isn't a token, and any fixed pixel width.

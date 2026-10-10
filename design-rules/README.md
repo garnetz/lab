@@ -6,6 +6,8 @@ These are the rules my portfolio is built to, written so Claude can follow them:
 
 Copy `SKILL.md` to `~/.claude/skills/gustav-design-rules/SKILL.md` (or into `.claude/skills/` in a project). Claude Code then picks it up whenever you build or review a page, or you can ask for it directly: "check this page against my design rules".
 
+It also has a mode for one request I make a lot: "make it more Scandinavian". Claude makes one pass of lagom (remove one thing from every group), more air, honest materials, warmer neutrals and plainer words, then says what it removed.
+
 ## Before and after
 
 On 2026-10-10 I asked Claude to check the [Voice orbs](../voice-orbs) page against the skill. That page was built quickly the same morning, without the rules. Claude found these breaks and fixed each one:
