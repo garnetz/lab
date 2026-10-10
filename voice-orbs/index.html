@@ -12,8 +12,8 @@
     --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
     /* Orb colours, read by orbs.js */
-    --orb-deep: #0c0f1a; --orb-mid: #333c63; --orb-main: #8fc9b6; --orb-light: #e9ecf4;
-    --orb-listen: #9dacd8; --orb-speak: #84d2b8;
+    --orb-deep: #000000; --orb-mid: #3a1206; --orb-main: #f1441d; --orb-light: #ffffff;
+    --orb-listen: #ffffff; --orb-speak: #ff6a3d;
   }
   /* Grid, type and spacing follow design-rules/SKILL.md. */
   :root { --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px; }
@@ -73,12 +73,14 @@
   .orb-fallback { border-radius: 50%; background: radial-gradient(circle at 38% 32%, var(--orb-light), var(--orb-main) 38%, var(--orb-mid) 78%); transform: scale(0.62); }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    .back { text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
+  .back:hover { color: var(--ink); }
   </style>
 </head>
 <body>
   <main class="page" data-tokens>
     <header class="intro grid4">
-      <p class="label muted">Lab</p>
+      <a class="label muted back" href="https://portfolio.gustav-arnetz.workers.dev/lab">← Lab</a>
       <div class="body">
       <h1 class="h3">Voice orbs</h1>
       <p class="big muted">In a voice conversation the screen has one job: show whose turn it is. These are eight visual directions for that, all reacting to the same moments. Pick a moment, play a short conversation, or try your microphone, and tap any look to see it large.</p>
@@ -111,10 +113,10 @@
         <div class="group">
           <p class="label">Colour</p>
           <div class="chips" role="group" aria-label="Colour" id="palettes">
-            <button class="chip" type="button" data-palette="dusk" aria-pressed="true">Dusk</button>
+            <button class="chip" type="button" data-palette="site" aria-pressed="true">Site</button>
+            <button class="chip" type="button" data-palette="dusk" aria-pressed="false">Dusk</button>
             <button class="chip" type="button" data-palette="ember" aria-pressed="false">Ember</button>
             <button class="chip" type="button" data-palette="tide" aria-pressed="false">Tide</button>
-            <button class="chip" type="button" data-palette="mono" aria-pressed="false">Mono</button>
           </div>
         </div>
         <div class="group">
@@ -209,10 +211,10 @@
 
     // Each palette sets the six orb colours: at rest, while you talk and while it talks.
     const PALETTES = {
+      site: { deep: '#000000', mid: '#3a1206', main: '#f1441d', light: '#ffffff', listen: '#ffffff', speak: '#ff6a3d' },
       dusk: { deep: '#0c0f1a', mid: '#333c63', main: '#8fc9b6', light: '#e9ecf4', listen: '#9dacd8', speak: '#84d2b8' },
       ember: { deep: '#0c0f1a', mid: '#3b2e16', main: '#f0b65a', light: '#f7efe2', listen: '#9dacd8', speak: '#ffba3e' },
       tide: { deep: '#0c0f1a', mid: '#252e4f', main: '#9db0f0', light: '#e9ecf4', listen: '#c9d3f5', speak: '#79cfa8' },
-      mono: { deep: '#050506', mid: '#2a2b31', main: '#a9adb8', light: '#f3f3f5', listen: '#8fb6ff', speak: '#f05a33' },
     };
     document.querySelectorAll('#palettes .chip').forEach((b) => b.addEventListener('click', () => {
       for (const [k, v] of Object.entries(PALETTES[b.dataset.palette])) tokens.style.setProperty('--orb-' + k, v);

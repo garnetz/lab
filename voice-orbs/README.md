@@ -6,7 +6,7 @@ In a voice conversation the screen has one job: show whose turn it is. This is a
 
 ## The design
 
-- **Colour says whose turn it is.** One colour at rest, a cooler one while you talk and a deeper one while the assistant talks. Four palettes (Dusk, Ember, Tide, Mono) show how far the idea stretches. Turn off "Colour by voice" to judge motion alone.
+- **Colour says whose turn it is.** One colour at rest, white while you talk and a brighter one while the assistant talks. It defaults to the portfolio's own black, white and orange; three more palettes (Dusk, Ember, Tide) show how far the idea stretches. Turn off "Colour by voice" to judge motion alone.
 - **Each moment moves differently.** Listening follows your voice. A pause slows to breathing. Thinking gathers inward. Speaking glows from the centre. Mic off goes grey and nearly still, so it can't be mistaken.
 - **Breath, not bounce.** At rest every look breathes four seconds in and six out. State changes ease over about 800ms, and voice level is smoothed so nothing jitters.
 - **Calm when asked.** With reduced motion on, the shapes hold still and each moment shows through light and colour alone.

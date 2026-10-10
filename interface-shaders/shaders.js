@@ -1,4 +1,4 @@
-/* Shaders for interfaces. Six small fragment shaders, each built for one moment in a real screen,
+/* Shaders for interfaces. Ten small fragment shaders, each built for one moment in a real screen,
    and a tiny WebGL runner. Every shader gets the same inputs: uRes (pixels), uTime (seconds),
    uMouse (0..1, eased), uHover (0..1, eased), uTap (xy in 0..1, z = seconds since the last tap),
    three dials uA, uB, uC (0..1), and two state values uK and uE (0..1) that the screen eases between.
@@ -163,6 +163,142 @@ void main() {
   float q = floor(l * (levels - 1.0) + bayer8(cell)) / (levels - 1.0);
   q = mix(q, scene(frame()), smoothstep(0.85, 1.0, k));
   vec3 col = q < 0.5 ? mix(INK, ACCENT, q * 2.0) : mix(ACCENT, PAPER, q * 2.0 - 1.0);
+  gl_FragColor = vec4(col, 1.0);
+}`,
+
+    // A trail map. Contour lines drift slowly and your pointer raises a hill. "Here" lights the one line
+    // at your height (uK); searching draws the map denser and moving (uE).
+    // uA: scale. uB: line count. uC: line strength.
+    contours: `
+vec2 you() { return aspectPoint(vec2(0.4, 0.42)); }
+float height(vec2 p) {
+  float t = uTime * (0.012 + 0.09 * uE);
+  vec2 m = aspectPoint(uMouse);
+  return fbm(vec3(p * mix(0.9, 2.2, uA), t)) + 0.35 * uHover * exp(-14.0 * dot(p - m, p - m));
+}
+void main() {
+  vec2 p = frame();
+  float e = px() * 1.5;
+  float h = height(p);
+  float g = max(length(vec2(height(p + vec2(e, 0.0)) - h, height(p + vec2(0.0, e)) - h)) / e, 1e-3);
+  float n = mix(12.0, 30.0, uB) * (1.0 + 0.5 * uE);
+  float x = h * n;
+  float d = abs(fract(x - 0.5) - 0.5) / (g * n);
+  float line = 1.0 - smoothstep(px() * 0.4, px() * 1.4, d);
+  float major = step(mod(floor(x + 0.5), 5.0), 0.5);
+  float ink = mix(0.16, 0.34, major) * (0.6 + 0.8 * uC) * (1.0 - 0.55 * uK);
+  vec3 col = INK + vec3(0.02) * p.y + vec3(ink) * line;
+  // Here: the contour through your position, in the accent.
+  float dl = abs(h - height(you())) / g;
+  col += ACCENT * uK * ((1.0 - smoothstep(px() * 0.5, px() * 1.6, dl)) + 0.08 * exp(-dl / (px() * 6.0)));
+  gl_FragColor = vec4(col, 1.0);
+}`,
+
+    // A theme that follows the light outside: blue hour, golden hour (uK), night (uE). Low sun rims the hills,
+    // the way backlight does in a photograph. uA: sun height. uB: haze. uC: flare.
+    golden: `
+void main() {
+  vec2 p = frame();
+  float W = uRes.x / uRes.y;
+  float gold = uK * (1.0 - uE), night = uE;
+  float hz = 0.36;
+  vec2 sun = vec2(W * (0.68 + 0.1 * (uMouse.x - 0.5) * uHover), hz + mix(-0.04, mix(0.03, 0.2, uA), gold) - 0.25 * night);
+  float y = clamp((p.y - hz) / (1.0 - hz), 0.0, 1.0);
+  vec3 top = mix(mix(vec3(0.05, 0.07, 0.19), vec3(0.2, 0.14, 0.2), gold), vec3(0.008, 0.01, 0.018), night);
+  vec3 hor = mix(mix(vec3(0.45, 0.44, 0.66), vec3(1.0, 0.56, 0.24), gold), vec3(0.05, 0.06, 0.1), night);
+  vec3 col = mix(hor, top, pow(y, 0.55));
+  float ds = length(p - sun);
+  vec3 glowCol = mix(vec3(0.62, 0.58, 0.85), vec3(1.0, 0.62, 0.3), gold);
+  col += glowCol * exp(-ds * mix(7.0, 4.5, gold)) * mix(0.35, 0.9, gold) * (1.0 - night);
+  col += vec3(1.0, 0.92, 0.78) * smoothstep(0.034, 0.028, ds) * gold;
+  col += vec3(1.0, 0.55, 0.25) * exp(-abs(p.y - sun.y) * 140.0) * exp(-abs(p.x - sun.x) * 1.8) * 0.5 * uC * gold;
+  col = mix(col, hor, uB * 0.35 * (1.0 - y) * (1.0 - night));
+  col += step(0.9975, hash(floor(gl_FragCoord.xy / 2.0))) * night * y * 0.5;
+  // Hills, with a rim of light along the crest when the sun is low behind them.
+  float crest = hz - 0.03 + 0.08 * fbm(vec3(p.x * 1.6, 0.0, 3.0));
+  float below = crest - p.y;
+  if (below > 0.0) {
+    vec3 ground = mix(mix(vec3(0.07, 0.07, 0.11), vec3(0.11, 0.07, 0.05), gold), vec3(0.01), night);
+    float field = fbm(vec3(p * vec2(6.0, 14.0), 1.0));
+    ground += vec3(0.9, 0.5, 0.2) * field * 0.1 * gold * exp(-below * 5.0);
+    float rim = exp(-below / (px() * 6.0)) * exp(-abs(p.x - sun.x) * 1.2);
+    col = ground + vec3(1.0, 0.7, 0.35) * rim * (0.25 + 1.1 * gold) * (1.0 - night);
+  }
+  col += (hash(gl_FragCoord.xy + fract(uTime) * 50.0) - 0.5) * 0.02;
+  gl_FragColor = vec4(col, 1.0);
+}`,
+
+    // A camera finding focus on a portrait. Night lights are sharp points until the subject is in focus (uK),
+    // then they open into soft discs. Hunting (uE) breathes the focus in and out.
+    // uA: aperture blades (round to hexagonal). uB: disc size. uC: how many lights.
+    bokeh: `
+vec3 lights(vec2 p, float scale, float focus, float seed) {
+  vec3 col = vec3(0.0);
+  vec2 g = p * scale, id = floor(g);
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 c = id + vec2(float(i), float(j));
+      float h = hash(c + seed);
+      if (h > mix(0.3, 0.85, uC)) continue;
+      vec2 o = vec2(hash(c + seed + 3.1), hash(c + seed + 7.7));
+      o += 0.12 * vec2(sin(uTime * 0.3 + h * 20.0), cos(uTime * 0.25 + h * 13.0));
+      vec2 q = (g - c - o) / scale;
+      float r = mix(0.0035, 0.03 + 0.045 * uB, focus) * (0.6 + 0.8 * hash(c + seed + 1.3));
+      float a = atan(q.y, q.x);
+      float hex = 0.866 / cos(mod(a, 1.0472) - 0.5236);
+      float d = length(q) / mix(1.0, hex, uA);
+      float soft = mix(0.0015, 0.0035, focus);
+      float disc = 1.0 - smoothstep(r - soft, r + soft, d);
+      float rim = smoothstep(r * 0.55, r, d) * disc * 0.6 * focus;
+      vec3 tint = h < 0.08 ? ACCENT : (h < 0.35 ? vec3(1.0, 0.7, 0.4) : vec3(1.0, 0.92, 0.8));
+      col += tint * (disc + rim) * mix(1.4, 0.3, focus) * (0.5 + 0.5 * hash(c + seed + 9.0));
+    }
+  }
+  return col;
+}
+void main() {
+  vec2 p = frame();
+  float focus = clamp(mix(uK, 0.5 + 0.45 * sin(uTime * 3.5), uE), 0.0, 1.0);
+  vec3 col = INK + vec3(0.05, 0.035, 0.03) * (1.0 - p.y);
+  col += lights(p, 5.0, focus, 0.0) + 0.7 * lights(p + 3.7, 9.0, focus * 0.8, 17.0);
+  col = 1.0 - exp(-col * 1.3);
+  vec2 c = frame() - aspectPoint(vec2(0.5));
+  col *= 1.0 - 0.35 * dot(c, c);
+  gl_FragColor = vec4(col, 1.0);
+}`,
+
+    // A shutter. Each tap flashes, and a light leak blooms in from the edge of the frame and fades,
+    // like the end of a roll of film. The film look (uK) warms the tones, lifts the blacks and adds grain.
+    // uA: how far the leak reaches. uB: grain. uC: warmth.
+    leak: `
+vec3 photo(vec2 p) {
+  float t = uTime * 0.02;
+  vec3 col = mix(vec3(0.78, 0.62, 0.5), vec3(0.32, 0.4, 0.55), smoothstep(0.3, 1.0, p.y));
+  col += vec3(0.08) * fbm(vec3(p * vec2(1.5, 5.0) + vec2(t, 0.0), 4.0));
+  float hill = 0.3 + 0.22 * fbm(vec3(p.x * 1.6, 0.0, 5.0));
+  col = mix(col, vec3(0.13, 0.14, 0.12) + 0.05 * fbm(vec3(p * 12.0, 1.0)), smoothstep(0.003, -0.003, p.y - hill));
+  return col;
+}
+void main() {
+  vec2 p = frame();
+  float W = uRes.x / uRes.y;
+  float age = uTap.z;
+  float burst = smoothstep(0.0, 0.12, age) * exp(-age * 1.1);
+  float amount = burst + 0.3 * uK;
+  vec3 col = photo(p);
+  // Film look
+  vec3 film = col * mix(vec3(1.0), vec3(1.08, 0.98, 0.84), uC) * 0.92 + vec3(0.05, 0.04, 0.03);
+  col = mix(col, film, uK);
+  vec2 v = p - vec2(W * 0.5, 0.5);
+  col *= 1.0 - (0.15 + 0.35 * uK) * dot(v, v);
+  // The leak, from the right edge
+  float edge = W - p.x;
+  float shape = 0.55 + 0.7 * fbm(vec3(p * vec2(1.2, 2.8), uTime * 0.15));
+  float mask = exp(-edge * mix(9.0, 2.2, uA) / max(amount, 0.05)) * shape * min(amount * 1.6, 1.0);
+  vec3 leakCol = mix(mix(vec3(0.85, 0.2, 0.3), ACCENT, smoothstep(0.0, 0.5, p.y)), vec3(1.0, 0.8, 0.35), smoothstep(0.5, 1.0, p.y));
+  col = 1.0 - (1.0 - col) * (1.0 - leakCol * mask);
+  col = mix(col, vec3(1.0), exp(-age * 14.0) * step(0.0, age) * 0.85);
+  col += (hash(gl_FragCoord.xy + fract(uTime * 7.0) * 91.0) - 0.5) * 0.2 * uB * uK;
   gl_FragColor = vec4(col, 1.0);
 }`,
 

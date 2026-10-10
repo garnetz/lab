@@ -1,12 +1,16 @@
 # Shaders for interfaces
 
-Six shaders, each placed in a real screen and driven by what that screen is doing:
+Ten shaders, each placed in a real screen and driven by what that screen is doing:
 
 - **Grain gradient** behind a sign-in screen. It settles and darkens while you type.
 - **Glass** in a dialog over a moving feed. It frosts in as the dialog opens, and its edge turns to the accent when the action fails.
 - **Spotlight** on a call to action. It drifts until you arrive, finds the button, and gathers when you press.
 - **Shimmer** on a loading list. It slows and says so when loading runs long, and the real rows land exactly where the skeleton was.
+- **Contours** on a trail map. Your pointer raises a hill, and “Here” lights the one line at your height.
 - **Dither** on a photo that loads progressively, from coarse blocks to real tones.
+- **Golden hour** as a theme that follows the light outside: blue hour, a low sun rimming the hills, then night.
+- **Bokeh** in a camera finding focus. Sharp points of light open into soft discs when focus locks.
+- **Light leak** on a shutter. Each photo flashes and a warm leak blooms in from the edge, with an optional film look.
 - **Ripple** on a pay button. Success rings calm, and a decline rings twice in the accent.
 
 Each screen works on its own (type, press, tap), has state buttons, and can play its states through. The dials and the shader code are folded underneath.
@@ -21,7 +25,7 @@ Each screen works on its own (type, press, tap), has state buttons, and can play
 
 ## How it works
 
-- `shaders.js` holds the six shaders and a small WebGL runner. Every shader gets the same inputs: resolution, time, an eased pointer position and hover amount, the last tap, three dials (`uA`, `uB`, `uC`) and two state values (`uK`, `uE`), all from 0 to 1. The runner eases every value toward its target, so a state change is a transition.
+- `shaders.js` holds the ten shaders and a small WebGL runner. Every shader gets the same inputs: resolution, time, an eased pointer position and hover amount, the last tap, three dials (`uA`, `uB`, `uC`) and two state values (`uK`, `uE`), all from 0 to 1. The runner eases every value toward its target, so a state change is a transition.
 - `index.html` holds the screens. Each study lists its states (what the shader eases to and what the interface shows) and a short script that plays them through.
 
 There are no libraries and no build step.
