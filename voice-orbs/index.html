@@ -15,44 +15,60 @@
     --orb-deep: #0c0f1a; --orb-mid: #333c63; --orb-main: #8fc9b6; --orb-light: #e9ecf4;
     --orb-listen: #9dacd8; --orb-speak: #84d2b8;
   }
+  /* Grid, type and spacing follow design-rules/SKILL.md. */
+  :root { --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px; }
+  @media (max-width: 1199.98px) { :root { --margin: 24px; --gap: 24px; --h3: 40px; --space-l: 96px; --space-m: 64px; } }
+  @media (max-width: 809.98px) { :root { --margin: 16px; --gap: 16px; --h3: 32px; --space-l: 64px; --space-m: 48px; --space-s: 24px; } }
   * { box-sizing: border-box; margin: 0; }
-  body { background: var(--bg); color: var(--ink); font: 200 16px/1.5 ui-sans-serif, system-ui, sans-serif; padding: 0 16px 64px; }
-  .page { max-width: 1200px; margin-inline: auto; padding-block: 64px 0; display: grid; gap: 64px; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.4 ui-sans-serif, system-ui, sans-serif; padding-block: 0 var(--space-l); }
+  .page { max-width: 1440px; margin-inline: auto; padding-inline: var(--margin); padding-block: var(--space-m) 0; display: grid; gap: var(--space-l); }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-s) var(--gap); }
   .muted { color: var(--muted); }
-  .label { font-weight: 400; }
-  .h3 { font-size: clamp(32px, 6vw, 48px); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
-  .big { font-size: 24px; font-weight: 400; line-height: 1.25; }
-  .intro { display: grid; gap: 12px; max-width: 720px; }
-  .intro p { max-width: 52ch; }
+  .label { font-size: 16px; line-height: 1.2; font-weight: 400; }
+  .h3 { font-size: var(--h3); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  .big { font-size: 24px; font-weight: 200; line-height: 1.4; }
+  p { text-wrap: pretty; }
 
-  .lab { display: grid; gap: 40px; align-items: center; }
-  @media (min-width: 834px) { .lab { grid-template-columns: 1fr 1fr; } }
-  .stage { display: grid; justify-items: center; gap: 4px; text-align: center; }
-  .stage canvas { width: min(480px, 100%); aspect-ratio: 1; display: block; }
-  .stage-name { margin-top: -24px; }
-  .hint { min-height: 1.5em; }
+  /* Label in column 1, title and text across 2–3. */
+  .intro { align-items: baseline; }
+  .intro .label { grid-column: 1; }
+  .intro .body { grid-column: 2 / span 2; display: grid; gap: 16px; }
 
-  .panel { display: grid; gap: 32px; }
-  .group { display: grid; gap: 12px; }
+  /* Stage across columns 1–2, controls across 3–4. */
+  .stage { grid-column: 1 / span 2; display: grid; justify-items: center; gap: 8px; text-align: center; }
+  .stage canvas { width: 100%; max-width: 100%; aspect-ratio: 1; display: block; }
+  .stage-name { margin-top: calc(var(--space-s) * -1); }
+  .hint { min-height: 1.4em; }
+  .panel { grid-column: 3 / span 2; display: grid; gap: var(--space-s); align-content: center; }
+  .group { display: grid; gap: 16px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { font: inherit; color: var(--ink); background: none; border: 1px solid var(--surface); border-radius: 999px; padding: 8px 14px; cursor: pointer; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
+  .chip { font: inherit; color: var(--ink); background: none; border: 1px solid var(--surface); border-radius: 4px; min-height: 44px; padding: 8px 16px; cursor: pointer; transition: background 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease); }
   .chip:hover { border-color: var(--muted); }
-  .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); font-weight: 400; }
-  .chip:focus-visible, .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .note { font-size: 14px; }
+  .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .chip:focus-visible, .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-  @media (min-width: 834px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 40px 40px; } }
-  .card { border: 1px solid var(--surface); border-radius: 16px; background: none; color: var(--ink); padding: 12px 16px 20px; display: grid; gap: 4px; justify-items: center; align-content: start; text-align: center; cursor: pointer; font: inherit; transition: border-color 0.2s var(--ease); }
+  /* Looks: one per column. */
+  .looks .label { grid-column: 1 / -1; }
+  .card { border: 1px solid var(--surface); border-radius: 4px; background: none; color: var(--ink); padding: 16px 16px 24px; display: grid; gap: 8px; justify-items: center; align-content: start; text-align: center; cursor: pointer; font: inherit; transition: border-color 0.2s var(--ease); }
   .card:hover { border-color: var(--muted); }
   .card[aria-pressed='true'] { border-color: var(--ink); }
-  .card canvas { width: 100%; max-width: 220px; aspect-ratio: 1; display: block; }
-  .card-name { margin-top: -12px; font-weight: 400; }
-  .card .muted { font-size: 14px; line-height: 1.45; }
+  .card canvas { width: 100%; aspect-ratio: 1; display: block; }
+  .card-name { margin-top: -16px; }
 
-  .principles { list-style: none; padding: 0; display: grid; gap: 24px; }
-  @media (min-width: 834px) { .principles { grid-template-columns: repeat(4, 1fr); gap: 40px; } }
-  .principles li { display: grid; gap: 4px; align-content: start; }
+  .principles { list-style: none; padding: 0; grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; row-gap: var(--space-s); }
+  .principles li { display: grid; gap: 8px; align-content: start; }
+  .what .label { grid-column: 1 / -1; }
+
+  @media (max-width: 1199.98px) {
+    .stage, .panel { grid-column: 1 / -1; }
+    .intro .body { grid-column: 2 / -1; }
+    .card, .principles li { grid-column: span 2; }
+  }
+  @media (max-width: 809.98px) {
+    .intro .label, .intro .body { grid-column: 1 / -1; }
+    .card { grid-column: span 2; }
+    .principles li { grid-column: 1 / -1; }
+  }
 
   .orb-fallback { border-radius: 50%; background: radial-gradient(circle at 38% 32%, var(--orb-light), var(--orb-main) 38%, var(--orb-mid) 78%); transform: scale(0.62); }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -61,16 +77,18 @@
 </head>
 <body>
   <main class="page" data-tokens>
-    <header class="intro">
+    <header class="intro grid4">
       <p class="label muted">Lab</p>
+      <div class="body">
       <h1 class="h3">Voice orbs</h1>
-      <p class="muted">In a voice conversation the screen has one job: show whose turn it is. These are eight visual directions for that, all reacting to the same moments. Pick a moment, play a short conversation, or try your microphone, and tap any look to see it large.</p>
+      <p class="big muted">In a voice conversation the screen has one job: show whose turn it is. These are eight visual directions for that, all reacting to the same moments. Pick a moment, play a short conversation, or try your microphone, and tap any look to see it large.</p>
+      </div>
     </header>
 
-    <section class="lab" aria-label="Selected look">
+    <section class="lab grid4" aria-label="Selected look">
       <div class="stage">
         <canvas id="big" aria-hidden="true"></canvas>
-        <p class="stage-name big" id="stageName">Organic mist</p>
+        <p class="stage-name h3" id="stageName">Organic mist</p>
         <p class="hint muted" id="stateHint" aria-live="polite">Breathing slowly, ready when you are</p>
       </div>
 
@@ -105,26 +123,26 @@
             <button class="chip" type="button" id="micBtn" aria-pressed="false">Use my microphone</button>
             <button class="chip" type="button" id="rmBtn" aria-pressed="false">Reduce motion</button>
           </div>
-          <p class="note muted" id="micNote">Without a microphone, voice is simulated. With one, the orbs follow your voice level on this page only. Nothing is recorded or sent.</p>
+          <p class="muted" id="micNote">Without a microphone, voice is simulated. With one, the orbs follow your voice level on this page only. Nothing is recorded or sent.</p>
         </div>
       </div>
     </section>
 
-    <section class="group" aria-label="Looks">
+    <section class="looks grid4" aria-label="Looks">
       <p class="label">Eight looks</p>
-      <div class="grid" id="grid">
-        <button class="card" type="button" data-look="organic" aria-pressed="true"><canvas aria-hidden="true"></canvas><span class="card-name">Organic mist</span><span class="muted">Mist inside a living outline that swells with your voice and rounds off to think.</span></button>
-        <button class="card" type="button" data-look="mist" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Mist</span><span class="muted">Clouds drifting inside a soft sphere. Calm, luminous, a little mysterious.</span></button>
-        <button class="card" type="button" data-look="mist" data-style="2" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Breath light</span><span class="muted">No edge at all, just a glow that gathers and softens. Less object, more presence.</span></button>
-        <button class="card" type="button" data-look="halo" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Halo</span><span class="muted">A ring of light with mist running through it. It draws in to a point to think.</span></button>
-        <button class="card" type="button" data-look="water" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Floating water</span><span class="muted">A ball of clear water that holds the room inside it. Your voice ripples its edge.</span></button>
-        <button class="card" type="button" data-look="pond" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Pond</span><span class="muted">Still water from above. Ripples flow in while you talk and out while it answers.</span></button>
-        <button class="card" type="button" data-look="horizon" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Horizon</span><span class="muted">Not an orb at all: a soft line of light that moves with each voice.</span></button>
-        <button class="card" type="button" data-look="fireflies" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Fireflies</span><span class="muted">A swarm of small lights that gathers, turns and pulses with each word.</span></button>
+      <div class="grid-items" id="grid" style="display: contents">
+        <button class="card" type="button" data-look="organic" aria-pressed="true"><canvas aria-hidden="true"></canvas><span class="card-name label">Organic mist</span><span class="muted">Mist inside a living outline that swells with your voice and rounds off to think.</span></button>
+        <button class="card" type="button" data-look="mist" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name label">Mist</span><span class="muted">Clouds drifting inside a soft sphere. Calm, luminous, a little mysterious.</span></button>
+        <button class="card" type="button" data-look="mist" data-style="2" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name label">Breath light</span><span class="muted">No edge at all, just a glow that gathers and softens. Less object, more presence.</span></button>
+        <button class="card" type="button" data-look="halo" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name label">Halo</span><span class="muted">A ring of light with mist running through it. It draws in to a point to think.</span></button>
+        <button class="card" type="button" data-look="water" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name label">Floating water</span><span class="muted">A ball of clear water that holds the room inside it. Your voice ripples its edge.</span></button>
+        <button class="card" type="button" data-look="pond" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name label">Pond</span><span class="muted">Still water from above. Ripples flow in while you talk and out while it answers.</span></button>
+        <button class="card" type="button" data-look="horizon" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name label">Horizon</span><span class="muted">Not an orb at all: a soft line of light that moves with each voice.</span></button>
+        <button class="card" type="button" data-look="fireflies" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name label">Fireflies</span><span class="muted">A swarm of small lights that gathers, turns and pulses with each word.</span></button>
       </div>
     </section>
 
-    <section class="group" aria-label="Why they behave like this">
+    <section class="what grid4" aria-label="Why they behave like this">
       <p class="label">What every look follows</p>
       <ul class="principles">
         <li><span class="label">Colour says whose turn it is</span><span class="muted">One colour at rest, a cooler one while you talk and a deeper one while it talks. You can tell at a glance without reading a word.</span></li>
