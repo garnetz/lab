@@ -4,8 +4,7 @@
    --orb-deep, --orb-mid, --orb-main, --orb-light, plus --orb-listen and --orb-speak, which the
    main colour shifts to while you talk and while the assistant talks, so it is always clear whose turn it is.
    Usage: const orb = VoiceOrb.create(canvas, { look: 'mist' });  orb.setState('listening'); orb.kick(0.8);
-   Looks: mist (styles 0 Mist, 1 Still water, 2 Breath light), organic, pond, water, halo, horizon,
-   halftone, bloom, contour, droplets, fireflies. */
+   Looks: organic, mist (styles 0 Mist, 1 Still water, 2 Breath light), pond, water, halo, horizon, fireflies. */
 (function () {
   const VERT = 'attribute vec2 p; void main() { gl_Position = vec4(p, 0.0, 1.0); }';
 
@@ -148,24 +147,6 @@ void main() {
   gl_FragColor = finish(pc, A, 0.1, 0.0);
 }`,
 
-    // A circle of tiny dots, like printed light; voice moves through it in waves.
-    halftone: `
-void main() {
-  vec2 uv = coords();
-  float R = 0.6 * (1.0 + 0.05 * uBreath + 0.06 * uLevel);
-  float cell = 0.055;
-  vec2 g = uv / cell; vec2 c = (floor(g) + 0.5) * cell; vec2 f = fract(g) - 0.5;
-  float rc = length(c) / R;
-  float n = fbm(vec3(c * 1.6, uTime * 0.25));
-  float ripple = (sin(rc * 9.0 - uTime * 2.2) * uSpeak + sin(rc * 9.0 + uTime * 2.2) * (1.0 - uSpeak) * 0.8) * uLevel * 0.2;
-  float size = clamp((0.15 + 0.55 * n + 0.25 * uBreath * (1.0 - rc) + ripple) * (1.0 - smoothstep(0.8, 1.05, rc)), 0.0, 0.48);
-  size *= 1.0 - 0.5 * uThink * rc;
-  float aa = px() / cell * 1.5;
-  float m = (1.0 - smoothstep(-aa, aa, length(f) - size)) * step(0.02, size);
-  vec3 col = mix(cMain, cLight, smoothstep(0.35, 0.8, n) * (1.0 - rc * 0.3));
-  gl_FragColor = finish(col * m, m, R, 0.7);
-}`,
-
     // A floating ball of clear water. It works like a lens (the room is seen small and upside down
     // inside it), its surface sloshes in slow waves, and voice sends ripples round its edge.
     water: `
@@ -210,90 +191,6 @@ void main() {
   col += cLight * uSpeak * uLevel * 0.35 * exp(-3.0 * rc * rc);
   col *= 1.0 - 0.15 * uThink;
   gl_FragColor = finish(col * mask, mask, rad, 0.7);
-}`,
-
-    // Three rings of translucent petals: open as you talk, fold in while it thinks.
-    bloom: `
-void main() {
-  vec2 uv = coords();
-  float r = length(uv), a0 = atan(uv.y, uv.x);
-  vec3 pc = vec3(0.0); float A = 0.0;
-  float open = clamp(0.55 + 0.25 * uBreath + 0.4 * uLevel - 0.45 * uThink, 0.08, 1.0) * (1.0 - 0.35 * uMute);
-  for (int i = 0; i < 3; i++) {
-    float fi = float(i);
-    float n = 5.0 + fi;
-    float R = 0.8 - fi * 0.2;
-    float dir = mod(fi, 2.0) * 2.0 - 1.0;
-    float a = a0 + uTime * (0.05 + 0.03 * fi) * dir + fi * 0.7 + uSwirl * 0.5 * dir;
-    float petal = pow(abs(cos(a * n * 0.5)), 0.7);
-    float edge = R * (0.32 + 0.68 * open * petal) * (1.0 + wobble(uv, 0.05 * uLevel));
-    float m = 1.0 - smoothstep(edge - px() * 1.5, edge + px() * 1.5, r);
-    float tip = clamp(r / max(edge, 0.001), 0.0, 1.0);
-    vec3 lc = mix(mix(cMid, cMain, 0.45 + 0.2 * fi), mix(cMain, cLight, 0.35 + 0.25 * fi), tip);
-    lc += cLight * (0.15 + 0.45 * uSpeak * uLevel) * (1.0 - tip) * fi * 0.5;
-    float o = m * 0.82;
-    pc = lc * o + pc * (1.0 - o); A = o + A * (1.0 - o);
-  }
-  float core = exp(-r * r / (0.012 + 0.01 * uBreath + 0.02 * uSpeak * uLevel));
-  pc += cLight * core * 0.8 * (1.0 - A * 0.3); A = max(A, core * 0.8);
-  pc *= 1.0 - 0.2 * uThink;
-  gl_FragColor = finish(pc, A, 0.5, 0.8);
-}`,
-
-    // Fine contour lines, like a topographic map of a calm hill; voice makes them ripple.
-    contour: `
-void main() {
-  vec2 uv = coords();
-  float r = length(uv), a = atan(uv.y, uv.x);
-  vec3 pc = vec3(0.0); float A = 0.0;
-  for (int i = 0; i < 8; i++) {
-    float fi = float(i);
-    float base = (0.1 + fi * 0.068) * (1.0 + 0.06 * uBreath) * (1.0 - 0.35 * uThink * (1.0 - fi / 8.0));
-    float k = noise(vec3(cos(a) * 1.4 + fi * 0.35, sin(a) * 1.4 - fi * 0.2, uTime * 0.45 + uSwirl * 0.6 + fi * 0.25)) - 0.5;
-    float amp = (0.07 + 0.14 * uLevel + 0.03 * uBreath) * (0.4 + fi * 0.12) * (1.0 - 0.85 * uMute);
-    float d = abs(r - (base + amp * k));
-    float w = px() * (1.1 + 1.2 * uSpeak * uLevel);
-    float m = 1.0 - smoothstep(w, w + px() * 1.2, d);
-    float pulse = 1.0 - uSpeak * 0.55 * (0.5 + 0.5 * sin(uTime * 2.6 - fi * 0.8));
-    float o = m * pulse * (0.45 + 0.55 * (1.0 - fi / 8.0));
-    pc = mix(cLight, cMain, fi / 7.0) * o + pc * (1.0 - o); A = o + A * (1.0 - o);
-  }
-  float body = (1.0 - smoothstep(0.55, 0.62, r)) * 0.08;
-  pc += cMain * body * (1.0 - A); A += body * (1.0 - A);
-  gl_FragColor = finish(pc, A, 0.6, 0.6);
-}`,
-
-    // Liquid drops orbiting a larger one: they drift apart when you speak and merge while it thinks.
-    droplets: `
-float fieldAt(vec2 p) {
-  float f = 0.05 / max(dot(p, p), 1e-4);
-  for (int i = 0; i < 4; i++) {
-    float fi = float(i);
-    float ang = (uTime + 1.4 * uSwirl) * (0.3 + 0.12 * fi) + fi * 1.5708;
-    float o = (0.36 + 0.09 * sin(uTime * 0.45 + fi * 1.3) + 0.16 * uLevel + 0.04 * uBreath) * (1.0 - 0.8 * uThink) * (1.0 - 0.9 * uMute);
-    vec2 c = o * vec2(cos(ang), sin(ang));
-    float rr = 0.085 + 0.02 * fi;
-    f += rr * rr / max(dot(p - c, p - c), 1e-4);
-  }
-  return f;
-}
-void main() {
-  vec2 uv = coords();
-  float f = fieldAt(uv);
-  float mask = smoothstep(0.95, 1.05, f);
-  // Height 1 - 1/f is smooth everywhere, so drops get a liquid dome without hot spots
-  float h = 1.0 - 1.0 / f;
-  vec2 g = vec2(1.0 - 1.0 / fieldAt(uv + vec2(0.004, 0.0)) - h, 1.0 - 1.0 / fieldAt(uv + vec2(0.0, 0.004)) - h) / 0.004;
-  vec3 n = normalize(vec3(-g * 0.05, 1.0));
-  vec3 L = normalize(vec3(-0.4, 0.6, 0.7));
-  vec3 col = mix(mix(cMain, cMid, 0.4), mix(cMain, cLight, 0.25), smoothstep(0.0, 0.8, h));
-  col *= 0.72 + 0.38 * max(dot(n, L), 0.0);
-  col += cLight * pow(max(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0)), 0.0), 28.0) * 0.7;
-  col += cMain * pow(1.0 - n.z, 2.0) * 0.5;                                   // rim
-  col += cLight * uSpeak * uLevel * 0.35 * smoothstep(0.4, 0.9, h);
-  col *= 1.0 - 0.15 * uThink;
-  float halo = smoothstep(0.35, 1.0, f) * (1.0 - mask) * (0.3 + 0.4 * uLevel) * (1.0 - 0.85 * uMute);
-  gl_FragColor = finish(col * mask + cMain * halo, mask + halo, 0.42, 0.0);
 }`,
 
     // A swarm of small lights on a slowly turning sphere: gathers to think, pulses to speak.

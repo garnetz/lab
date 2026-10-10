@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Voice orbs</title>
-  <meta name="description" content="Twelve ways to show whose turn it is in a voice conversation, all reacting to the same moments." />
+  <meta name="description" content="Eight ways to show whose turn it is in a voice conversation, all reacting to the same moments." />
   <style>
   /* One dark stage: the orbs are light, so the page commits to a single dark look. */
   :root {
@@ -12,8 +12,8 @@
     --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
     /* Orb colours, read by orbs.js */
-    --orb-deep: #050506; --orb-mid: #2a2b31; --orb-main: #a9adb8; --orb-light: #f3f3f5;
-    --orb-listen: #8fb6ff; --orb-speak: #f05a33;
+    --orb-deep: #0c0f1a; --orb-mid: #333c63; --orb-main: #8fc9b6; --orb-light: #e9ecf4;
+    --orb-listen: #9dacd8; --orb-speak: #84d2b8;
   }
   * { box-sizing: border-box; margin: 0; }
   body { background: var(--bg); color: var(--ink); font: 200 16px/1.5 ui-sans-serif, system-ui, sans-serif; padding: 0 16px 64px; }
@@ -64,13 +64,13 @@
     <header class="intro">
       <p class="label muted">Lab</p>
       <h1 class="h3">Voice orbs</h1>
-      <p class="muted">In a voice conversation the screen has one job: show whose turn it is. These are twelve visual directions for that, all reacting to the same moments. Pick a moment, play a short conversation, or try your microphone, and tap any look to see it large.</p>
+      <p class="muted">In a voice conversation the screen has one job: show whose turn it is. These are eight visual directions for that, all reacting to the same moments. Pick a moment, play a short conversation, or try your microphone, and tap any look to see it large.</p>
     </header>
 
     <section class="lab" aria-label="Selected look">
       <div class="stage">
         <canvas id="big" aria-hidden="true"></canvas>
-        <p class="stage-name big" id="stageName">Mist</p>
+        <p class="stage-name big" id="stageName">Organic mist</p>
         <p class="hint muted" id="stateHint" aria-live="polite">Breathing slowly, ready when you are</p>
       </div>
 
@@ -91,6 +91,15 @@
           </div>
         </div>
         <div class="group">
+          <p class="label">Colour</p>
+          <div class="chips" role="group" aria-label="Colour" id="palettes">
+            <button class="chip" type="button" data-palette="dusk" aria-pressed="true">Dusk</button>
+            <button class="chip" type="button" data-palette="ember" aria-pressed="false">Ember</button>
+            <button class="chip" type="button" data-palette="tide" aria-pressed="false">Tide</button>
+            <button class="chip" type="button" data-palette="mono" aria-pressed="false">Mono</button>
+          </div>
+        </div>
+        <div class="group">
           <p class="label">Voice</p>
           <div class="chips">
             <button class="chip" type="button" id="micBtn" aria-pressed="false">Use my microphone</button>
@@ -102,19 +111,15 @@
     </section>
 
     <section class="group" aria-label="Looks">
-      <p class="label">Twelve looks</p>
+      <p class="label">Eight looks</p>
       <div class="grid" id="grid">
-        <button class="card" type="button" data-look="mist" aria-pressed="true"><canvas aria-hidden="true"></canvas><span class="card-name">Mist</span><span class="muted">Clouds drifting inside a soft sphere. Calm, luminous, a little mysterious.</span></button>
-        <button class="card" type="button" data-look="mist" data-style="1" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Still water</span><span class="muted">Slow horizontal currents and a glassy highlight. The calmest sphere.</span></button>
+        <button class="card" type="button" data-look="organic" aria-pressed="true"><canvas aria-hidden="true"></canvas><span class="card-name">Organic mist</span><span class="muted">Mist inside a living outline that swells with your voice and rounds off to think.</span></button>
+        <button class="card" type="button" data-look="mist" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Mist</span><span class="muted">Clouds drifting inside a soft sphere. Calm, luminous, a little mysterious.</span></button>
         <button class="card" type="button" data-look="mist" data-style="2" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Breath light</span><span class="muted">No edge at all, just a glow that gathers and softens. Less object, more presence.</span></button>
-        <button class="card" type="button" data-look="pond" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Pond</span><span class="muted">Still water from above. Ripples flow in while you talk and out while it answers.</span></button>
-        <button class="card" type="button" data-look="water" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Floating water</span><span class="muted">A ball of clear water that holds the room inside it. Your voice ripples its edge.</span></button>
         <button class="card" type="button" data-look="halo" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Halo</span><span class="muted">A ring of light with mist running through it. It draws in to a point to think.</span></button>
+        <button class="card" type="button" data-look="water" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Floating water</span><span class="muted">A ball of clear water that holds the room inside it. Your voice ripples its edge.</span></button>
+        <button class="card" type="button" data-look="pond" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Pond</span><span class="muted">Still water from above. Ripples flow in while you talk and out while it answers.</span></button>
         <button class="card" type="button" data-look="horizon" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Horizon</span><span class="muted">Not an orb at all: a soft line of light that moves with each voice.</span></button>
-        <button class="card" type="button" data-look="halftone" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Halftone</span><span class="muted">A circle of tiny dots, like printed light. Voice moves through them in waves.</span></button>
-        <button class="card" type="button" data-look="bloom" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Bloom</span><span class="muted">Layers of petals that open as you talk and fold in while it thinks.</span></button>
-        <button class="card" type="button" data-look="contour" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Contour</span><span class="muted">Fine lines like a map of a calm hill. Your voice sends ripples through them.</span></button>
-        <button class="card" type="button" data-look="droplets" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Droplets</span><span class="muted">Liquid drops that drift apart when you speak and merge while it thinks.</span></button>
         <button class="card" type="button" data-look="fireflies" aria-pressed="false"><canvas aria-hidden="true"></canvas><span class="card-name">Fireflies</span><span class="muted">A swarm of small lights that gathers, turns and pulses with each word.</span></button>
       </div>
     </section>
@@ -122,7 +127,7 @@
     <section class="group" aria-label="Why they behave like this">
       <p class="label">What every look follows</p>
       <ul class="principles">
-        <li><span class="label">Colour says whose turn it is</span><span class="muted">Cool while you talk, warm while it talks, neutral at rest. You can tell at a glance without reading a word.</span></li>
+        <li><span class="label">Colour says whose turn it is</span><span class="muted">One colour at rest, a cooler one while you talk and a deeper one while it talks. You can tell at a glance without reading a word.</span></li>
         <li><span class="label">Each moment moves differently</span><span class="muted">Listening follows your voice. A pause slows to breathing. Thinking gathers inward. Speaking glows from the centre. Mic off goes grey and nearly still.</span></li>
         <li><span class="label">Breath, not bounce</span><span class="muted">At rest it breathes four seconds in and six out. Every change eases over about 800ms, so nothing snaps or jitters.</span></li>
         <li><span class="label">Calm when asked</span><span class="muted">With reduced motion on, the shapes hold still and each moment shows through light and colour alone.</span></li>
@@ -135,15 +140,15 @@
   (() => {
     const HINTS = {
       ready: 'Breathing slowly, ready when you are',
-      listening: 'Cool while you talk, following each syllable',
+      listening: 'Shifting cool while you talk, following each syllable',
       pause: 'Slowing to the breath while you think',
       thinking: 'Gathering inward',
-      speaking: 'Warm, glowing from the centre as it talks',
+      speaking: 'Deepening and glowing from the centre as it talks',
       muted: 'Grey and nearly still, so it can’t be mistaken',
     };
     const tokens = document.querySelector('[data-tokens]');
     const cards = [...document.querySelectorAll('.card')];
-    const big = VoiceOrb.create(document.getElementById('big'), { tokens, look: 'mist' });
+    const big = VoiceOrb.create(document.getElementById('big'), { tokens, look: 'organic' });
     const small = cards.map((c) => VoiceOrb.create(c.querySelector('canvas'), { tokens, look: c.dataset.look, style: +(c.dataset.style || 0) }));
     const all = [big, ...small];
     let state = 'ready', mic = null, simTimer = null, tourTimer = null;
@@ -182,6 +187,19 @@
       big.setStyle(+(c.dataset.style || 0));
       document.getElementById('stageName').textContent = c.querySelector('.card-name').textContent;
       cards.forEach((x) => x.setAttribute('aria-pressed', String(x === c)));
+    }));
+
+    // Each palette sets the six orb colours: at rest, while you talk and while it talks.
+    const PALETTES = {
+      dusk: { deep: '#0c0f1a', mid: '#333c63', main: '#8fc9b6', light: '#e9ecf4', listen: '#9dacd8', speak: '#84d2b8' },
+      ember: { deep: '#0c0f1a', mid: '#3b2e16', main: '#f0b65a', light: '#f7efe2', listen: '#9dacd8', speak: '#ffba3e' },
+      tide: { deep: '#0c0f1a', mid: '#252e4f', main: '#9db0f0', light: '#e9ecf4', listen: '#c9d3f5', speak: '#79cfa8' },
+      mono: { deep: '#050506', mid: '#2a2b31', main: '#a9adb8', light: '#f3f3f5', listen: '#8fb6ff', speak: '#f05a33' },
+    };
+    document.querySelectorAll('#palettes .chip').forEach((b) => b.addEventListener('click', () => {
+      for (const [k, v] of Object.entries(PALETTES[b.dataset.palette])) tokens.style.setProperty('--orb-' + k, v);
+      all.forEach((o) => o.refreshColours());
+      document.querySelectorAll('#palettes .chip').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     }));
 
     document.getElementById('voiceColours').addEventListener('click', (e) => {
