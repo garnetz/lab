@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Shaders for interfaces</title>
-  <meta name="description" content="Six shaders, each placed in a real screen and driven by its states: sign in, a dialog, a button, a loading list, a photo and a payment." />
+  <meta name="description" content="Ten shaders, each placed in a real screen and driven by its states: sign in, a dialog, a button, a loading list, a trail map, a photo, the light outside, a camera, a shutter and a payment." />
   <style>
   /* One dark stage: the shaders are light on dark, so the page commits to a single dark look.
      Grid, type and spacing follow design-rules/SKILL.md. */
@@ -98,15 +98,25 @@
   @media (max-width: 809.98px) { .what li { grid-column: 1 / -1; } }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    .back { text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
+  .back:hover { color: var(--ink); }
+  /* Trail map, light, camera */
+  .you { position: absolute; left: 40%; bottom: 42%; width: 12px; height: 12px; margin: -6px; border-radius: 50%; background: var(--ink); box-shadow: 0 0 0 4px rgb(0 0 0 / 0.5); }
+  .corner { position: absolute; left: 16px; top: 16px; right: 16px; display: grid; gap: 4px; text-shadow: 0 1px 8px rgb(0 0 0 / 0.6); }
+  .focus { position: absolute; left: 50%; top: 46%; width: 22%; aspect-ratio: 1; translate: -50% -50%; border: 1px solid rgb(255 255 255 / 0.7); border-radius: 4px; transition: border-color 0.4s var(--ease), scale 0.4s var(--ease); }
+  .focus.locked { border-color: var(--accent); scale: 0.9; }
+  .shutter { position: absolute; left: 50%; bottom: 16px; translate: -50% 0; width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--ink); background: rgb(255 255 255 / 0.2); cursor: pointer; transition: transform 0.15s var(--ease); }
+  .shutter:active { transform: scale(0.92); }
+  .caption.top { bottom: auto; top: 16px; }
   </style>
 </head>
 <body>
   <main class="page">
     <header class="intro grid4">
-      <p class="label muted">Lab</p>
+      <a class="label muted back" href="https://portfolio.gustav-arnetz.workers.dev/lab">← Lab</a>
       <div class="body">
         <h1 class="h3">Shaders for interfaces</h1>
-        <p class="big muted">Six shaders, each placed in a real screen and driven by what the screen is doing. A background calms down while you type. A dialog's glass warns you. A skeleton turns into the rows it was holding a place for. Try the states, use the screens, or play each one through.</p>
+        <p class="big muted">Ten shaders, each placed in a real screen and driven by what the screen is doing. A background calms down while you type. A skeleton turns into the rows it was holding a place for. And four that play with light the way a photographer does: low sun, out-of-focus lights, a light leak. Try the states, use the screens, or play each one through.</p>
         <button class="chip" type="button" id="still" aria-pressed="false">Reduce motion</button>
       </div>
     </header>
@@ -153,6 +163,21 @@
   </template>
   <template id="ui-dither">
     <div class="caption" aria-live="polite"><span class="label">Evening light</span><span class="muted" data-status>Loading</span></div>
+  </template>
+  <template id="ui-contours">
+    <span class="you" aria-hidden="true"></span>
+    <div class="caption" aria-live="polite"><span class="label">Trail map</span><span class="muted" data-note>Move to raise a hill</span></div>
+  </template>
+  <template id="ui-golden">
+    <div class="corner" aria-live="polite"><span class="label" data-when>Blue hour</span><span class="muted">The theme follows the light outside.</span></div>
+  </template>
+  <template id="ui-bokeh">
+    <span class="focus" aria-hidden="true" data-focus></span>
+    <div class="caption" aria-live="polite"><span class="label">Portrait</span><span class="muted" data-note>Tap to focus</span></div>
+  </template>
+  <template id="ui-leak">
+    <div class="caption top" aria-live="polite"><span class="label">Film</span><span class="muted" data-note>Ready</span></div>
+    <button class="shutter" type="button" aria-label="Take a photo" data-shutter></button>
   </template>
   <template id="ui-ripple">
     <div class="pay" aria-live="polite">
@@ -232,6 +257,16 @@
         script: [['Loading', 3000], ['Slow', 3500], ['Loaded', 3500], ['Loading', 0]],
       },
       {
+        id: 'contours', name: 'Contours', use: 'A trail map. The lines drift and your pointer raises a hill. “Here” lights the one line at your height, so you can see where the walk stays level.',
+        dials: [['a', 'Scale', 0.45], ['b', 'Lines', 0.4], ['c', 'Strength', 0.5]],
+        states: {
+          Map: (s, ui) => { s.to({ k: 0, e: 0 }); $('[data-note]', ui).textContent = 'Move to raise a hill'; },
+          Here: (s, ui) => { s.to({ k: 1, e: 0 }); $('[data-note]', ui).textContent = 'Everything on this line is your height'; },
+          Searching: (s, ui) => { s.to({ k: 0, e: 1 }); $('[data-note]', ui).textContent = 'Finding trails nearby'; },
+        },
+        script: [['Map', 2500], ['Searching', 3000], ['Here', 3500], ['Map', 0]],
+      },
+      {
         id: 'dither', name: 'Dither', use: 'A photo that loads progressively. Coarse dithered blocks hold the shape at once, get finer, then resolve into the real tones.',
         dials: [['a', 'Blocks', 0.5], ['b', 'Tones', 0.2], ['c', 'Contrast', 0.5]],
         states: {
@@ -240,6 +275,38 @@
           Loaded: (s, ui) => { s.to({ k: 1 }); $('[data-status]', ui).textContent = 'Loaded'; },
         },
         script: [['Placeholder', 2000], ['Loading', 2500], ['Loaded', 3500], ['Placeholder', 0]],
+      },
+      {
+        id: 'golden', name: 'Golden hour', use: 'A theme that follows the light outside. Blue hour is cool and even, golden hour puts a low sun behind the hills and rims them with light, night goes dark and quiet.',
+        dials: [['a', 'Sun height', 0.35], ['b', 'Haze', 0.4], ['c', 'Flare', 0.5]],
+        states: {
+          'Blue hour': (s, ui) => { s.to({ k: 0, e: 0 }); $('[data-when]', ui).textContent = 'Blue hour'; },
+          'Golden hour': (s, ui) => { s.to({ k: 1, e: 0 }); $('[data-when]', ui).textContent = 'Golden hour'; },
+          Night: (s, ui) => { s.to({ k: 1, e: 1 }); $('[data-when]', ui).textContent = 'Night'; },
+        },
+        script: [['Blue hour', 2500], ['Golden hour', 4000], ['Night', 3000], ['Blue hour', 0]],
+      },
+      {
+        id: 'bokeh', name: 'Bokeh', use: 'A camera finding focus on a portrait. The lights behind are sharp points until focus locks, then open into soft discs. While it hunts, they breathe.',
+        dials: [['a', 'Blades', 0.3], ['b', 'Disc size', 0.5], ['c', 'Lights', 0.5]],
+        states: {
+          Searching: (s, ui) => { s.to({ k: 0, e: 1 }); $('[data-focus]', ui).classList.remove('locked'); $('[data-note]', ui).textContent = 'Finding focus'; },
+          Focused: (s, ui) => { s.to({ k: 1, e: 0 }); $('[data-focus]', ui).classList.add('locked'); $('[data-note]', ui).textContent = 'Focused'; },
+          'All sharp': (s, ui) => { s.to({ k: 0, e: 0 }); $('[data-focus]', ui).classList.remove('locked'); $('[data-note]', ui).textContent = 'Tap to focus'; },
+        },
+        script: [['All sharp', 2000], ['Searching', 2500], ['Focused', 4000], ['All sharp', 0]],
+        wire(ui, go) { ui.closest('.screen').addEventListener('click', () => go(this.current === 'Focused' ? 'All sharp' : 'Focused')); },
+      },
+      {
+        id: 'leak', name: 'Light leak', use: 'A shutter. Each photo flashes, and a light leak blooms in from the edge and fades, like the last frames of a roll. The film look warms the tones and adds grain.',
+        dials: [['a', 'Reach', 0.5], ['b', 'Grain', 0.5], ['c', 'Warmth', 0.6]],
+        states: {
+          Live: (s, ui) => { s.to({ k: 0 }); $('[data-note]', ui).textContent = 'Ready'; },
+          Shutter: (s, ui) => { s.to({ k: 1 }); s.tap(1, 0.5); $('[data-note]', ui).textContent = 'Saved'; },
+          Film: (s, ui) => { s.to({ k: 1 }); $('[data-note]', ui).textContent = 'Film look'; },
+        },
+        script: [['Live', 2500], ['Shutter', 3500], ['Film', 3000], ['Live', 0]],
+        wire(ui, go) { $('[data-shutter]', ui).addEventListener('click', () => go('Shutter')); },
       },
       {
         id: 'ripple', name: 'Ripple', use: 'A pay button’s surface. A tap answers at once; success rings calm, and a decline rings twice in the accent.',

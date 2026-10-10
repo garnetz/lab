@@ -8,8 +8,9 @@ Each folder is one experiment you can run on its own. The write-ups live at [arn
 | --- | --- |
 | [Ask me about my work](ask-me-about-my-work) | A voice prototype: ask a portfolio a question out loud and hear the answer, powered by Claude. |
 | [Voice orbs](voice-orbs) | Eight visual directions for a voice assistant's presence, all reacting to the same conversation moments. |
-| [Shaders for interfaces](interface-shaders) | Six shaders placed in real screens (sign in, a dialog, a loading list, a payment) and driven by their states. |
+| [Shaders for interfaces](interface-shaders) | Ten shaders placed in real screens (sign in, a trail map, a camera, a shutter, a payment) and driven by their states, four of them about light. |
 | [Design rules](design-rules) | The rules my portfolio is built to, as a Claude skill you can download, with a real before and after. |
+| [A calmer fitness app](fitness-study) | Mobbin research, a moodboard, six guidelines and a prototype that compares you to your usual, not to a goal. |
 | [Shader study](shader-study) | Eight small fragment shaders, one technique each, sharing the same inputs and three colours. |
 
 ## Licence

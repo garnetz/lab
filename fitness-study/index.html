@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A calmer fitness app</title>
+  <meta name="description" content="From Mobbin research to a moodboard, six guidelines and a working prototype of a fitness app that compares you to your usual, not to a goal." />
+  <style>
+  /* The page follows design-rules/SKILL.md: 4 columns, one accent, 4px radius.
+     The prototype inside it has its own quiet, warm palette. */
+  :root {
+    color-scheme: dark;
+    --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px;
+    /* Prototype palette */
+    --paper: #f3f0e9; --paper-2: #e8e4da; --char: #1d1d1b; --stone: #77746c; --moss: #4d6b52; --night: #121412;
+  }
+  @media (max-width: 1199.98px) { :root { --margin: 24px; --gap: 24px; --h3: 40px; --space-l: 96px; --space-m: 64px; } }
+  @media (max-width: 809.98px) { :root { --margin: 16px; --gap: 16px; --h3: 32px; --space-l: 64px; --space-m: 48px; --space-s: 24px; } }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.4 ui-sans-serif, system-ui, sans-serif; padding-block: 0 var(--space-l); }
+  .page { max-width: 1440px; margin-inline: auto; padding-inline: var(--margin); padding-block: var(--space-m) 0; display: grid; gap: var(--space-l); }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-s) var(--gap); }
+  .muted { color: var(--muted); }
+  .label { font-size: 16px; line-height: 1.2; font-weight: 400; }
+  .h3 { font-size: var(--h3); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  .big { font-size: 24px; font-weight: 200; line-height: 1.4; }
+  p { text-wrap: pretty; }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: rgb(255 255 255 / 0.3); }
+  a:hover { text-decoration-color: currentColor; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .intro { align-items: baseline; }
+  .intro > .label { grid-column: 1; }
+  .intro .body { grid-column: 2 / span 2; display: grid; gap: 16px; }
+  .steps { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; }
+  .steps li { list-style: none; }
+  .steps a { display: inline-flex; align-items: center; min-height: 44px; padding: 8px 16px; border: 1px solid var(--surface); border-radius: 4px; text-decoration: none; transition: border-color 0.2s var(--ease); }
+  .steps a:hover { border-color: var(--muted); }
+
+  .section-head { grid-column: 1; display: grid; gap: 8px; align-content: start; }
+  .section-body { grid-column: 2 / -1; }
+  @media (max-width: 1199.98px) { .intro .body { grid-column: 2 / -1; } }
+  @media (max-width: 809.98px) { .intro > .label, .intro .body, .section-head, .section-body { grid-column: 1 / -1; } }
+
+  /* Research */
+  .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); padding: 0; }
+  .facts li { list-style: none; display: grid; gap: 4px; align-content: start; }
+  @media (max-width: 809.98px) { .facts { grid-template-columns: 1fr; } }
+
+  /* Moodboard: one tile per column */
+  .tile { display: grid; gap: 12px; align-content: start; min-width: 0; }
+  .sketch { aspect-ratio: 4 / 3; border-radius: 4px; background: var(--surface); display: grid; place-items: center; overflow: hidden; }
+  .sketch svg { width: 70%; height: 70%; color: var(--muted); }
+  .seen { color: var(--muted); }
+  @media (max-width: 1199.98px) { .tile { grid-column: span 2; } }
+  @media (max-width: 809.98px) { .tile { grid-column: 1 / -1; } }
+  .swatches { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap); }
+  .swatch { display: grid; gap: 8px; }
+  .swatch i { display: block; aspect-ratio: 2 / 1; border-radius: 4px; border: 1px solid var(--surface); }
+  @media (max-width: 809.98px) { .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+  /* Guidelines */
+  .rules { display: contents; padding: 0; counter-reset: rule; }
+  .rules li { list-style: none; display: grid; gap: 8px; align-content: start; counter-increment: rule; }
+  .rules li::before { content: counter(rule, decimal-leading-zero); color: var(--muted); }
+  @media (max-width: 1199.98px) { .rules li { grid-column: span 2; } }
+  @media (max-width: 809.98px) { .rules li { grid-column: 1 / -1; } }
+
+  /* Prototype */
+  .proto-stage { grid-column: 1 / span 2; display: grid; gap: 16px; justify-items: center; }
+  .proto-notes { grid-column: 3 / span 2; display: grid; gap: var(--space-s); align-content: start; }
+  @media (max-width: 809.98px) { .proto-stage, .proto-notes { grid-column: 1 / -1; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: none; border: 1px solid var(--surface); border-radius: 4px; min-height: 44px; padding: 8px 16px; cursor: pointer; transition: background 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease); }
+  .chip:hover { border-color: var(--muted); }
+  .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .note { display: grid; gap: 8px; transition: opacity 0.4s var(--ease); }
+  .note.dim { opacity: 0.35; }
+
+  /* The phone screen (no device frame, just the screen) */
+  .phone { width: min(100%, 375px); aspect-ratio: 375 / 760; border-radius: 4px; overflow: hidden; position: relative; background: var(--paper); color: var(--char); font-size: 16px; container-type: inline-size; }
+  .scr { position: absolute; inset: 0; padding: 24px 20px 20px; display: flex; flex-direction: column; gap: 16px; transition: opacity 0.5s var(--ease), transform 0.5s var(--ease); }
+  .scr[hidden] { display: flex; opacity: 0; transform: translateY(8px); pointer-events: none; visibility: hidden; }
+  .p-muted { color: var(--stone); }
+  .p-big { font-size: 32px; line-height: 1.1; font-weight: 400; letter-spacing: -0.02em; text-wrap: balance; }
+  .p-label { font-weight: 400; }
+  .p-btn { border: 0; border-radius: 4px; min-height: 48px; padding: 12px 20px; cursor: pointer; font-weight: 400; background: var(--char); color: var(--paper); transition: transform 0.2s var(--ease), background 0.2s var(--ease); }
+  .p-btn:active { transform: scale(0.98); }
+  .p-btn.quiet { background: none; color: inherit; border: 1px solid rgb(0 0 0 / 0.15); }
+  .phone :focus-visible { outline-color: var(--moss); }
+
+  /* Today */
+  .glow { position: relative; height: 32%; flex: none; display: grid; place-items: center; }
+  .glow i { position: absolute; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, var(--moss) 0%, rgb(77 107 82 / 0.45) 38%, rgb(77 107 82 / 0) 70%); transform: scale(var(--s, 1)); transition: transform 1.2s var(--ease), opacity 1.2s var(--ease); opacity: var(--o, 1); animation: breathe 6s ease-in-out infinite; }
+  @keyframes breathe { 50% { scale: 1.04; } }
+  .glow svg { position: absolute; inset: auto 0 0; width: 100%; height: 40%; overflow: visible; }
+  .why { display: grid; padding: 0; }
+  .why li { list-style: none; display: grid; grid-template-columns: 20px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid rgb(0 0 0 / 0.08); align-items: baseline; }
+  .why b { font-weight: 400; color: var(--stone); }
+  .suggest { margin-top: auto; display: grid; gap: 12px; padding: 16px; background: var(--paper-2); border-radius: 4px; }
+  .tomorrow { color: var(--moss); }
+
+  /* Session */
+  .scr.dark { background: var(--night); color: var(--paper); }
+  .scr.dark .p-muted { color: rgb(243 240 233 / 0.55); }
+  .scr.dark .p-btn { background: var(--paper); color: var(--char); }
+  .scr.dark .p-btn.quiet { background: none; color: var(--paper); border-color: rgb(243 240 233 / 0.2); }
+  .segs { display: flex; gap: 4px; }
+  .segs i { flex: 1; height: 3px; border-radius: 2px; background: rgb(243 240 233 / 0.18); overflow: hidden; position: relative; }
+  .segs i.done { background: rgb(243 240 233 / 0.7); }
+  .segs i b { position: absolute; inset: 0; background: rgb(243 240 233 / 0.7); transform-origin: left; transform: scaleX(var(--p, 0)); }
+  .timer { font-size: 88px; font-weight: 200; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+  .now { display: grid; gap: 4px; margin-top: 8%; }
+  .now .p-big { transition: color 0.6s var(--ease); }
+  .now.rest .p-big { color: #9fb8a2; }
+  .next { margin-top: auto; padding-top: 12px; border-top: 1px solid rgb(243 240 233 / 0.12); display: flex; gap: 8px; }
+  .acts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  /* Done */
+  .feel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .feel .p-btn[aria-pressed='true'] { background: var(--moss); color: var(--paper); border-color: var(--moss); }
+  .reply { min-height: 3em; color: var(--moss); transition: opacity 0.4s var(--ease); }
+
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { *, .glow i { transition: none !important; animation: none !important; } }
+    .back { text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
+  .back:hover { color: var(--ink); }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro grid4">
+      <a class="label muted back" href="https://portfolio.gustav-arnetz.workers.dev/lab">← Lab</a>
+      <div class="body">
+        <h1 class="h3">A calmer fitness app</h1>
+        <p class="big muted">A study in four steps, made with Claude Code: how fitness and health apps show readiness, guide a session and end it; a moodboard of the patterns; six guidelines; and a small prototype that follows them.</p>
+        <ol class="steps">
+          <li><a href="#research">Research</a></li>
+          <li><a href="#moodboard">Moodboard</a></li>
+          <li><a href="#guidelines">Guidelines</a></li>
+          <li><a href="#prototype">Prototype</a></li>
+        </ol>
+      </div>
+    </header>
+
+    <section class="grid4" id="research" aria-labelledby="research-h">
+      <div class="section-head"><p class="label muted">01</p><h2 class="label" id="research-h">Research</h2></div>
+      <div class="section-body" style="display: grid; gap: var(--space-s)">
+        <p class="big">Four searches on Mobbin, eight iOS screens each, read one by one. The question was simple: what does a fitness app say to you on an ordinary day?</p>
+        <ul class="facts">
+          <li><span class="label">The day</span><span class="muted">Activity summaries with rings, bars and steps. Apple Fitness, Garmin Connect, Fitbit, Bevel, Gentler Streak.</span></li>
+          <li><span class="label">The body</span><span class="muted">Readiness and recovery scores and how they are explained. Oura, WHOOP, Visible, Tempo, Ultrahuman.</span></li>
+          <li><span class="label">The session</span><span class="muted">Screens while you train, and the screen right after. Peloton, Ladder, Runna, Hevy, Strava.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="grid4" id="moodboard" aria-labelledby="mood-h">
+      <div class="section-head" style="grid-column: 1 / -1"><p class="label muted">02</p><h2 class="label" id="mood-h">Moodboard</h2><p class="muted">Eight patterns that kept showing up, sketched rather than screenshotted. The links open the screens on Mobbin.</p></div>
+      <div id="tiles" class="grid4" style="grid-column: 1 / -1"></div>
+      <div class="swatches" aria-label="Prototype palette">
+        <div class="swatch"><i style="background:#f3f0e9"></i><span class="label">Paper</span><span class="muted">#F3F0E9, for reading</span></div>
+        <div class="swatch"><i style="background:#77746c"></i><span class="label">Stone</span><span class="muted">#77746C, for the quiet words</span></div>
+        <div class="swatch"><i style="background:#121412"></i><span class="label">Night</span><span class="muted">#121412, for the session</span></div>
+        <div class="swatch"><i style="background:#4d6b52"></i><span class="label">Moss</span><span class="muted">#4D6B52, used once a screen</span></div>
+      </div>
+    </section>
+
+    <section class="grid4" id="guidelines" aria-labelledby="guide-h">
+      <div class="section-head" style="grid-column: 1 / -1"><p class="label muted">03</p><h2 class="label" id="guide-h">Guidelines</h2></div>
+      <ol class="rules">
+        <li><span class="label">Say it in words first</span><span class="muted">“A steady day” before any number. Most apps lead with a score; the best ones (Visible, Tempo) add a word. Lead with the word.</span></li>
+        <li><span class="label">Compare to your usual</span><span class="muted">A dashed line for your own normal beats a ring for someone else’s goal. Gentler Streak’s “above typical Friday” is the model.</span></li>
+        <li><span class="label">Three reasons, in plain rows</span><span class="muted">Why today looks like this, as three short sentences with a direction. Never a wall of metrics.</span></li>
+        <li><span class="label">Time, now, next</span><span class="muted">While you train, the screen shows the clock, what you are doing and what comes after. Nothing else competes.</span></li>
+        <li><span class="label">Rest is a state, not a wait</span><span class="muted">Rest gets its own calm colour and a kind word. It is part of the session, not a gap in it.</span></li>
+        <li><span class="label">End with a question</span><span class="muted">Skip the confetti. Ask how it felt, and let the answer shape tomorrow. That is the reward.</span></li>
+      </ol>
+    </section>
+
+    <section class="grid4" id="prototype" aria-labelledby="proto-h">
+      <div class="section-head" style="grid-column: 1 / -1"><p class="label muted">04</p><h2 class="label" id="proto-h">Prototype</h2><p class="muted">Sample data only. Pick a morning, start the session (its blocks are short for the demo), and answer the last question.</p></div>
+      <div class="proto-stage">
+        <div class="chips" role="group" aria-label="Sample morning">
+          <button class="chip" type="button" data-day="rested" aria-pressed="false">Rested</button>
+          <button class="chip" type="button" data-day="usual" aria-pressed="true">Usual</button>
+          <button class="chip" type="button" data-day="tired" aria-pressed="false">Tired</button>
+        </div>
+        <div class="phone" id="phone">
+          <!-- Today -->
+          <div class="scr" id="s-today" aria-label="Today">
+            <p class="p-muted" id="t-date">Saturday morning</p>
+            <p class="p-big" id="t-word">A steady day</p>
+            <div class="glow" aria-hidden="true">
+              <i id="t-glow"></i>
+              <svg viewBox="0 0 300 60" preserveAspectRatio="none"><line x1="0" x2="300" y1="30" y2="30" stroke="#1d1d1b" stroke-opacity="0.35" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"/><path id="t-line" fill="none" stroke="#1d1d1b" stroke-width="1.5" vector-effect="non-scaling-stroke"/><circle id="t-dot" r="4" fill="#4d6b52"/></svg>
+            </div>
+            <p class="p-muted" id="t-compare">About your usual. The dashed line is your normal over two weeks.</p>
+            <ul class="why" id="t-why"></ul>
+            <p class="tomorrow" id="t-tomorrow" hidden></p>
+            <div class="suggest">
+              <div><p class="p-label" id="t-plan">Easy strength</p><p class="p-muted" id="t-plan-sub">20 minutes, three moves</p></div>
+              <button class="p-btn" type="button" id="start">Start</button>
+            </div>
+          </div>
+          <!-- Session -->
+          <div class="scr dark" id="s-session" aria-label="Session" hidden>
+            <div class="segs" id="segs" aria-hidden="true"></div>
+            <p class="p-muted" id="x-plan">Easy strength</p>
+            <p class="timer" id="x-timer" role="timer" aria-live="off">0:20</p>
+            <div class="now" id="x-now" aria-live="polite"><p class="p-big" id="x-name">Warm up</p><p class="p-muted" id="x-detail">March in place</p></div>
+            <p class="next p-muted"><span>Next</span><span id="x-next" style="color: var(--paper)">Goblet squat</span></p>
+            <div class="acts">
+              <button class="p-btn quiet" type="button" id="pause">Pause</button>
+              <button class="p-btn quiet" type="button" id="skip">Skip</button>
+              <button class="p-btn quiet" type="button" id="end">End</button>
+            </div>
+          </div>
+          <!-- Done -->
+          <div class="scr" id="s-done" aria-label="Done" hidden>
+            <p class="p-muted" id="d-plan">Easy strength</p>
+            <p class="p-big">Done. You moved for <span id="d-time">0:00</span>.</p>
+            <p class="p-label" style="margin-top: 24px">How did that feel?</p>
+            <div class="feel" role="group" aria-label="How did that feel?">
+              <button class="p-btn quiet" type="button" data-feel="easy" aria-pressed="false">Easy</button>
+              <button class="p-btn quiet" type="button" data-feel="right" aria-pressed="false">About right</button>
+              <button class="p-btn quiet" type="button" data-feel="hard" aria-pressed="false">Hard</button>
+            </div>
+            <p class="reply" id="d-reply" aria-live="polite"></p>
+            <button class="p-btn" type="button" id="home" style="margin-top: auto" disabled>Back to today</button>
+          </div>
+        </div>
+      </div>
+      <div class="proto-notes" id="notes">
+        <div class="note" data-for="today"><p class="label">Today</p><p class="muted">The word comes first and the soft light grows or shrinks with it. Below it, one line against your own dashed normal, and three plain reasons. One suggestion, one button. Guidelines 01, 02 and 03.</p></div>
+        <div class="note dim" data-for="session"><p class="label">Session</p><p class="muted">Dark, because you glance at it from a mat. The clock, the move and what comes next. Rest turns the move name pale green and says something kind. Guidelines 04 and 05.</p></div>
+        <div class="note dim" data-for="done"><p class="label">Done</p><p class="muted">No confetti, no calories. One honest number and one question, and the answer changes what tomorrow suggests. Guideline 06.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="study.js"></script>
+</body>
+</html>
