@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shaders for interfaces</title>
+  <meta name="description" content="Six small shaders an interface could use, each live with a few dials and its code underneath." />
+  <style>
+  /* One dark stage: the shaders are light on dark, so the page commits to a single dark look. */
+  :root {
+    color-scheme: dark;
+    --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.5 ui-sans-serif, system-ui, sans-serif; padding: 0 16px 64px; }
+  .page { max-width: 1200px; margin-inline: auto; padding-block: 64px 0; display: grid; gap: 64px; }
+  .muted { color: var(--muted); }
+  .label { font-weight: 400; }
+  .h3 { font-size: clamp(32px, 6vw, 48px); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  .intro { display: grid; gap: 12px; max-width: 720px; }
+  .intro p { max-width: 52ch; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { font: inherit; color: var(--ink); background: none; border: 1px solid var(--surface); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+  .chip:hover { border-color: var(--muted); }
+  .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); font-weight: 400; }
+  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .grid { display: grid; gap: 40px; }
+  @media (min-width: 834px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .study { display: grid; gap: 16px; align-content: start; min-width: 0; }
+  .study canvas { width: 100%; aspect-ratio: 4 / 3; display: block; border-radius: 16px; background: #0a0a0b; touch-action: none; cursor: crosshair; }
+  .study canvas.no-gl { background: linear-gradient(135deg, #1a1a1a, #0a0a0b); }
+  .head { display: grid; gap: 2px; }
+  .dials { display: grid; gap: 8px 24px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 520px) { .dials { grid-template-columns: 1fr; } }
+  .dial { display: grid; gap: 4px; font-size: 14px; }
+  .dial input { width: 100%; accent-color: var(--accent); }
+  .code summary { cursor: pointer; font-size: 14px; color: var(--muted); }
+  .code summary:hover { color: var(--ink); }
+  .code pre { margin-top: 8px; padding: 16px; border: 1px solid var(--surface); border-radius: 12px; overflow-x: auto; font: 12px/1.55 ui-monospace, 'SF Mono', Menlo, monospace; color: var(--muted); max-height: 360px; }
+
+  .what { display: grid; gap: 12px; }
+  .principles { list-style: none; padding: 0; display: grid; gap: 24px; }
+  @media (min-width: 834px) { .principles { grid-template-columns: repeat(4, 1fr); gap: 40px; } }
+  .principles li { display: grid; gap: 4px; align-content: start; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <p class="label muted">Lab</p>
+      <h1 class="h3">Shaders for interfaces</h1>
+      <p class="muted">Six small shaders an interface could actually use: a background, a glass panel, a light that follows you, a loading state, a texture and a response to touch. Each one runs live on the GPU. Move over them, tap them, turn the dials, and open the code underneath.</p>
+      <div class="bar"><button class="chip" type="button" id="still" aria-pressed="false">Reduce motion</button></div>
+    </header>
+
+    <section class="grid" id="grid" aria-label="Studies"></section>
+
+    <section class="what" aria-label="What they share">
+      <p class="label">What every study follows</p>
+      <ul class="principles">
+      <li><span class="label">Quiet by default</span><span class="muted">Slow, low contrast and dark, so the content on top stays the point. Colour comes from one accent.</span></li>
+      <li><span class="label">Answer people</span><span class="muted">The pointer, a tap or a press changes something. A surface that reacts feels like a material, not a video.</span></li>
+      <li><span class="label">Cheap to run</span><span class="muted">One pass each, no textures, and nothing draws while it is off screen.</span></li>
+      <li><span class="label">Calm when asked</span><span class="muted">With reduced motion on, nothing moves on its own. A tap still gets its answer.</span></li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="shaders.js"></script>
+  <script>
+  (() => {
+    const STUDIES = [
+      { id: 'grain', name: 'Grain gradient', use: 'For hero backgrounds and empty states.', dials: [['a', 'Wander', 0.55], ['b', 'Grain', 0.45], ['c', 'Contrast', 0.5]] },
+      { id: 'glass', name: 'Glass', use: 'For panels and sheets over rich content. Leans toward your pointer.', dials: [['a', 'Blur', 0.55], ['b', 'Bend', 0.5], ['c', 'Frost', 0.35]] },
+      { id: 'spotlight', name: 'Spotlight', use: 'For hover states on large surfaces. Drifts on its own until you arrive.', dials: [['a', 'Radius', 0.4], ['b', 'Brightness', 0.5], ['c', 'Grid', 0.3]] },
+      { id: 'shimmer', name: 'Shimmer', use: 'For loading skeletons, drawn on the GPU instead of animated in CSS.', dials: [['a', 'Speed', 0.4], ['b', 'Width', 0.4], ['c', 'Angle', 0.5]] },
+      { id: 'dither', name: 'Dither', use: 'For texture and personality, like print or an old screen.', dials: [['a', 'Pixel', 0.3], ['b', 'Tones', 0.4], ['c', 'Contrast', 0.5]] },
+      { id: 'ripple', name: 'Ripple', use: 'For touch feedback. Tap anywhere on it to send a ring.', dials: [['a', 'Wave', 0.5], ['b', 'Ring time', 0.5], ['c', 'Lines', 0.4]] },
+    ];
+    const grid = document.getElementById('grid');
+    const mounted = [];
+    const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; };
+
+    for (const s of STUDIES) {
+      const card = el('article', 'study');
+      const canvas = el('canvas');
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', `${s.name} shader`);
+      const head = el('div', 'head');
+      head.append(el('h2', 'label', s.name), el('p', 'muted', s.use));
+      const dials = el('div', 'dials');
+      const init = Object.fromEntries(s.dials.map(([k, , v]) => [k, v]));
+      const shader = Shaders.mount(canvas, s.id, init);
+      for (const [k, label, v] of s.dials) {
+        const id = `${s.id}-${k}`;
+        const wrap = el('label', 'dial');
+        wrap.htmlFor = id;
+        const input = el('input');
+        Object.assign(input, { type: 'range', id, min: 0, max: 1, step: 0.01, value: v });
+        input.addEventListener('input', () => shader.set(k, Number(input.value)));
+        wrap.append(el('span', 'muted', label), input);
+        dials.append(wrap);
+      }
+      const code = el('details', 'code');
+      code.append(el('summary', null, 'Shader code'), el('pre', null, Shaders.SOURCES[s.id].trim()));
+      card.append(canvas, head, dials, code);
+      grid.append(card);
+      mounted.push(shader);
+    }
+
+    const btn = document.getElementById('still');
+    const setStill = (on) => { mounted.forEach((m) => m.still(on)); btn.setAttribute('aria-pressed', String(on)); };
+    btn.addEventListener('click', () => setStill(btn.getAttribute('aria-pressed') !== 'true'));
+    setStill(matchMedia('(prefers-reduced-motion: reduce)').matches);
+  })();
+  </script>
+</body>
+</html>
