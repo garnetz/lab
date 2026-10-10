@@ -3,18 +3,16 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>A calmer fitness app</title>
-  <meta name="description" content="From Mobbin research to a moodboard, six guidelines and a working prototype of a fitness app that compares you to your usual, not to a goal." />
+  <title>Research to prototype: a fitness study</title>
+  <meta name="description" content="Mobbin research on 32 fitness and health screens, turned into a moodboard, a visual language, six guidelines and a working prototype that follows them." />
   <style>
   /* The page follows design-rules/SKILL.md: 4 columns, one accent, 4px radius.
-     The prototype inside it has its own quiet, warm palette. */
+     The prototype inside it does not: its look comes from the research. */
   :root {
     color-scheme: dark;
     --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
     --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px;
-    /* Prototype palette */
-    --paper: #f3f0e9; --paper-2: #e8e4da; --char: #1d1d1b; --stone: #77746c; --moss: #4d6b52; --night: #121412;
   }
   @media (max-width: 1199.98px) { :root { --margin: 24px; --gap: 24px; --h3: 40px; --space-l: 96px; --space-m: 64px; } }
   @media (max-width: 809.98px) { :root { --margin: 16px; --gap: 16px; --h3: 32px; --space-l: 64px; --space-m: 48px; --space-s: 24px; } }
@@ -30,10 +28,12 @@
   a { color: inherit; text-underline-offset: 3px; text-decoration-color: rgb(255 255 255 / 0.3); }
   a:hover { text-decoration-color: currentColor; }
   button { font: inherit; color: inherit; }
+  code { font: 200 16px/1.5 ui-monospace, 'SF Mono', Menlo, monospace; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
   .intro { align-items: baseline; }
-  .intro > .label { grid-column: 1; }
+  .back { grid-column: 1; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
+  .back:hover { color: var(--ink); }
   .intro .body { grid-column: 2 / span 2; display: grid; gap: 16px; }
   .steps { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; }
   .steps li { list-style: none; }
@@ -41,23 +41,32 @@
   .steps a:hover { border-color: var(--muted); }
 
   .section-head { grid-column: 1; display: grid; gap: 8px; align-content: start; }
-  .section-body { grid-column: 2 / -1; }
+  .section-body { grid-column: 2 / -1; display: grid; gap: var(--space-s); align-content: start; }
+  .wide { grid-column: 1 / -1; }
   @media (max-width: 1199.98px) { .intro .body { grid-column: 2 / -1; } }
-  @media (max-width: 809.98px) { .intro > .label, .intro .body, .section-head, .section-body { grid-column: 1 / -1; } }
+  @media (max-width: 809.98px) { .back, .intro .body, .section-head, .section-body { grid-column: 1 / -1; } }
 
-  /* Research */
-  .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); padding: 0; }
-  .facts li { list-style: none; display: grid; gap: 4px; align-content: start; }
-  @media (max-width: 809.98px) { .facts { grid-template-columns: 1fr; } }
+  /* Lists of three across the three body columns */
+  .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-s) var(--gap); padding: 0; }
+  .three li { list-style: none; display: grid; gap: 8px; align-content: start; }
+  @media (max-width: 809.98px) { .three { grid-template-columns: 1fr; } }
+  .queries { display: grid; gap: 16px; padding: 0; counter-reset: q; }
+  .queries li { list-style: none; display: grid; grid-template-columns: 40px 1fr; gap: 16px; padding-top: 16px; border-top: 1px solid var(--surface); counter-increment: q; }
+  .queries li::before { content: counter(q, decimal-leading-zero); color: var(--muted); }
 
-  /* Moodboard: one tile per column */
+  /* Moodboard */
   .tile { display: grid; gap: 12px; align-content: start; min-width: 0; }
   .sketch { aspect-ratio: 4 / 3; border-radius: 4px; background: var(--surface); display: grid; place-items: center; overflow: hidden; }
   .sketch svg { width: 70%; height: 70%; color: var(--muted); }
   .seen { color: var(--muted); }
   @media (max-width: 1199.98px) { .tile { grid-column: span 2; } }
   @media (max-width: 809.98px) { .tile { grid-column: 1 / -1; } }
-  .swatches { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap); }
+
+  /* Visual language */
+  .lang { display: grid; padding: 0; }
+  .lang li { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); padding: 16px 0; border-top: 1px solid var(--surface); }
+  @media (max-width: 809.98px) { .lang li { grid-template-columns: 1fr; gap: 4px; } }
+  .swatches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--gap); }
   .swatch { display: grid; gap: 8px; }
   .swatch i { display: block; aspect-ratio: 2 / 1; border-radius: 4px; border: 1px solid var(--surface); }
   @media (max-width: 809.98px) { .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -69,7 +78,7 @@
   @media (max-width: 1199.98px) { .rules li { grid-column: span 2; } }
   @media (max-width: 809.98px) { .rules li { grid-column: 1 / -1; } }
 
-  /* Prototype */
+  /* Prototype stage */
   .proto-stage { grid-column: 1 / span 2; display: grid; gap: 16px; justify-items: center; }
   .proto-notes { grid-column: 3 / span 2; display: grid; gap: var(--space-s); align-content: start; }
   @media (max-width: 809.98px) { .proto-stage, .proto-notes { grid-column: 1 / -1; } }
@@ -80,54 +89,83 @@
   .note { display: grid; gap: 8px; transition: opacity 0.4s var(--ease); }
   .note.dim { opacity: 0.35; }
 
-  /* The phone screen (no device frame, just the screen) */
-  .phone { width: min(100%, 375px); aspect-ratio: 375 / 760; border-radius: 4px; overflow: hidden; position: relative; background: var(--paper); color: var(--char); font-size: 16px; container-type: inline-size; }
-  .scr { position: absolute; inset: 0; padding: 24px 20px 20px; display: flex; flex-direction: column; gap: 16px; transition: opacity 0.5s var(--ease), transform 0.5s var(--ease); }
-  .scr[hidden] { display: flex; opacity: 0; transform: translateY(8px); pointer-events: none; visibility: hidden; }
-  .p-muted { color: var(--stone); }
-  .p-big { font-size: 32px; line-height: 1.1; font-weight: 400; letter-spacing: -0.02em; text-wrap: balance; }
-  .p-label { font-weight: 400; }
-  .p-btn { border: 0; border-radius: 4px; min-height: 48px; padding: 12px 20px; cursor: pointer; font-weight: 400; background: var(--char); color: var(--paper); transition: transform 0.2s var(--ease), background 0.2s var(--ease); }
-  .p-btn:active { transform: scale(0.98); }
-  .p-btn.quiet { background: none; color: inherit; border: 1px solid rgb(0 0 0 / 0.15); }
-  .phone :focus-visible { outline-color: var(--moss); }
+  /* ---- The app. Its language comes from the research, not from this site. ---- */
+  .phone {
+    --ground: #f2f2f4; --card: #fff; --ink-a: #111113; --grey: #8a8a8e; --line: #e5e5ea;
+    --lime: #c6f24e; --green: #1f9d55; --rest: #6aa8ff; --black: #000; --raised: #1c1c1e; --raised-2: #2c2c2e;
+    width: min(100%, 375px); aspect-ratio: 375 / 780; border-radius: 40px; overflow: hidden; position: relative;
+    background: var(--ground); color: var(--ink-a);
+    font: 400 16px/1.3 ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
+    box-shadow: 0 0 0 10px #1a1a1a;
+  }
+  .scr { position: absolute; inset: 0; display: flex; flex-direction: column; transition: opacity 0.45s var(--ease), transform 0.45s var(--ease); }
+  .scr[hidden] { display: flex; opacity: 0; transform: translateY(10px); pointer-events: none; visibility: hidden; }
+  .bar-top { flex: none; height: 48px; padding: 16px 28px 0; display: flex; justify-content: space-between; font-weight: 600; font-size: 15px; }
+  .scroll { flex: 1; overflow-y: auto; padding: 4px 16px 112px; display: grid; gap: 12px; align-content: start; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .a-eyebrow { color: var(--grey); font-size: 15px; font-weight: 500; }
+  .a-title { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+  .a-card { background: var(--card); border-radius: 20px; padding: 18px; display: grid; gap: 12px; }
+  .a-label { color: var(--grey); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .a-btn { border: 0; border-radius: 999px; min-height: 52px; padding: 14px 22px; font-weight: 600; font-size: 17px; cursor: pointer; background: var(--ink-a); color: #fff; transition: transform 0.2s var(--ease), background 0.2s var(--ease); }
+  .a-btn:active { transform: scale(0.97); }
+  .phone :focus-visible { outline-color: var(--green); }
 
-  /* Today */
-  .glow { position: relative; height: 32%; flex: none; display: grid; place-items: center; }
-  .glow i { position: absolute; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, var(--moss) 0%, rgb(77 107 82 / 0.45) 38%, rgb(77 107 82 / 0) 70%); transform: scale(var(--s, 1)); transition: transform 1.2s var(--ease), opacity 1.2s var(--ease); opacity: var(--o, 1); animation: breathe 6s ease-in-out infinite; }
-  @keyframes breathe { 50% { scale: 1.04; } }
-  .glow svg { position: absolute; inset: auto 0 0; width: 100%; height: 40%; overflow: visible; }
+  /* Today: one ring, measured against your usual */
+  .ring-wrap { display: grid; place-items: center; position: relative; padding: 4px 0; }
+  .ring-wrap svg { width: 188px; height: 188px; overflow: visible; }
+  .ring-wrap .arc { transition: stroke-dashoffset 1.1s var(--ease); }
+  .ring-c { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 2px; }
+  .ring-word { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .ring-sub { color: var(--grey); font-size: 14px; }
+  .compare { text-align: center; color: var(--grey); font-size: 15px; }
   .why { display: grid; padding: 0; }
-  .why li { list-style: none; display: grid; grid-template-columns: 20px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid rgb(0 0 0 / 0.08); align-items: baseline; }
-  .why b { font-weight: 400; color: var(--stone); }
-  .suggest { margin-top: auto; display: grid; gap: 12px; padding: 16px; background: var(--paper-2); border-radius: 4px; }
-  .tomorrow { color: var(--moss); }
+  .why li { list-style: none; display: grid; grid-template-columns: 32px 1fr; gap: 12px; align-items: center; padding: 10px 0; }
+  .why li + li { border-top: 1px solid var(--line); }
+  .why i { width: 32px; height: 32px; border-radius: 50%; background: var(--ground); display: grid; place-items: center; font-style: normal; font-weight: 600; }
+  .why i.up { color: var(--green); }
+  .tomorrow { background: #eaf7d4; color: #2c5a12; border-radius: 16px; padding: 12px 14px; font-size: 15px; }
+  .plan { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+  .plan-name { font-size: 20px; font-weight: 700; }
+  .tabbar { position: absolute; left: 16px; right: 16px; bottom: 22px; height: 64px; border-radius: 999px; background: rgb(255 255 255 / 0.86); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 8px 30px rgb(0 0 0 / 0.08); display: grid; grid-template-columns: repeat(3, 1fr); padding: 6px; }
+  .tab { display: grid; place-items: center; align-content: center; gap: 2px; font-size: 11px; font-weight: 600; color: var(--grey); border-radius: 999px; }
+  .tab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .tab.on { background: var(--ground); color: var(--ink-a); }
 
-  /* Session */
-  .scr.dark { background: var(--night); color: var(--paper); }
-  .scr.dark .p-muted { color: rgb(243 240 233 / 0.55); }
-  .scr.dark .p-btn { background: var(--paper); color: var(--char); }
-  .scr.dark .p-btn.quiet { background: none; color: var(--paper); border-color: rgb(243 240 233 / 0.2); }
-  .segs { display: flex; gap: 4px; }
-  .segs i { flex: 1; height: 3px; border-radius: 2px; background: rgb(243 240 233 / 0.18); overflow: hidden; position: relative; }
-  .segs i.done { background: rgb(243 240 233 / 0.7); }
-  .segs i b { position: absolute; inset: 0; background: rgb(243 240 233 / 0.7); transform-origin: left; transform: scaleX(var(--p, 0)); }
-  .timer { font-size: 88px; font-weight: 200; line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
-  .now { display: grid; gap: 4px; margin-top: 8%; }
-  .now .p-big { transition: color 0.6s var(--ease); }
-  .now.rest .p-big { color: #9fb8a2; }
-  .next { margin-top: auto; padding-top: 12px; border-top: 1px solid rgb(243 240 233 / 0.12); display: flex; gap: 8px; }
-  .acts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  /* Session: black, the clock, the move, what's next */
+  .scr.dark { background: var(--black); color: #fff; }
+  .segs { display: flex; gap: 4px; padding: 0 20px; }
+  .segs i { flex: 1; height: 4px; border-radius: 2px; background: var(--raised-2); overflow: hidden; position: relative; }
+  .segs i.done { background: var(--lime); }
+  .segs i b { position: absolute; inset: 0; background: var(--lime); transform-origin: left; transform: scaleX(var(--p, 0)); }
+  .s-head { padding: 16px 20px 0; display: flex; justify-content: space-between; color: #8e8e93; font-size: 15px; font-weight: 500; }
+  .clock { position: relative; display: grid; place-items: center; margin: 18px auto 0; width: 248px; height: 248px; }
+  .clock svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+  .clock .arc { transition: stroke 0.6s var(--ease); }
+  .timer { font-size: 72px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .move { text-align: center; padding: 18px 20px 0; display: grid; gap: 4px; }
+  .move-name { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; transition: color 0.6s var(--ease); }
+  .move-detail { color: #8e8e93; font-size: 16px; }
+  .move.rest .move-name { color: var(--rest); }
+  .next { margin: auto 16px 0; background: var(--raised); border-radius: 18px; padding: 14px 16px; display: flex; gap: 10px; align-items: center; font-size: 16px; }
+  .next b { color: #8e8e93; font-weight: 500; }
+  .controls { display: flex; justify-content: center; align-items: center; gap: 28px; padding: 18px 0 30px; }
+  .round { width: 56px; height: 56px; border-radius: 50%; border: 0; background: var(--raised-2); color: #fff; display: grid; place-items: center; cursor: pointer; }
+  .round.main { width: 76px; height: 76px; background: var(--lime); color: #000; }
+  .round svg { width: 22px; height: 22px; fill: currentColor; }
+  .round.main svg { width: 28px; height: 28px; }
 
   /* Done */
+  .done-mark { width: 64px; height: 64px; border-radius: 50%; background: var(--lime); display: grid; place-items: center; margin-top: 12px; }
+  .done-mark svg { width: 30px; height: 30px; fill: none; stroke: #000; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
   .feel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .feel .p-btn[aria-pressed='true'] { background: var(--moss); color: var(--paper); border-color: var(--moss); }
-  .reply { min-height: 3em; color: var(--moss); transition: opacity 0.4s var(--ease); }
+  .feel button { border: 0; border-radius: 999px; min-height: 48px; background: var(--ground); font-weight: 600; font-size: 15px; cursor: pointer; transition: background 0.2s var(--ease), color 0.2s var(--ease); }
+  .feel button[aria-pressed='true'] { background: var(--ink-a); color: #fff; }
+  .reply { min-height: 2.6em; color: var(--green); font-size: 15px; }
+  .a-btn:disabled { background: #c7c7cc; cursor: default; }
 
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  @media (prefers-reduced-motion: reduce) { *, .glow i { transition: none !important; animation: none !important; } }
-    .back { text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
-  .back:hover { color: var(--ink); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
   </style>
 </head>
 <body>
@@ -135,54 +173,88 @@
     <header class="intro grid4">
       <a class="label muted back" href="https://portfolio.gustav-arnetz.workers.dev/lab">← Lab</a>
       <div class="body">
-        <h1 class="h3">A calmer fitness app</h1>
-        <p class="big muted">A study in four steps, made with Claude Code: how fitness and health apps show readiness, guide a session and end it; a moodboard of the patterns; six guidelines; and a small prototype that follows them.</p>
+        <h1 class="h3">Research to prototype: a fitness study</h1>
+        <p class="big muted">One loop, start to finish: search real apps on Mobbin, read every screen, pull the patterns into a moodboard, turn them into a visual language and six guidelines, then build a prototype that follows them. The prototype looks nothing like my site on purpose. Its look comes from the research. Made with Claude Code and the Mobbin MCP.</p>
         <ol class="steps">
+          <li><a href="#process">Process</a></li>
           <li><a href="#research">Research</a></li>
           <li><a href="#moodboard">Moodboard</a></li>
+          <li><a href="#language">Visual language</a></li>
           <li><a href="#guidelines">Guidelines</a></li>
           <li><a href="#prototype">Prototype</a></li>
+          <li><a href="#kept">Kept and cut</a></li>
         </ol>
       </div>
     </header>
 
+    <section class="grid4" id="process" aria-labelledby="process-h">
+      <div class="section-head"><p class="label muted">00</p><h2 class="label" id="process-h">Process</h2></div>
+      <div class="section-body">
+        <p class="big">I set the brief and made the calls. Claude Code did the searching, reading and building, through the Mobbin MCP and a browser it could screenshot. Each step fed the next one.</p>
+        <ol class="three">
+          <li><span class="label">1. Brief</span><span class="muted">A general fitness and health app, not a niche one. Find out what these apps say to you on an ordinary day.</span></li>
+          <li><span class="label">2. Search</span><span class="muted">Four plain-language searches on Mobbin, one per moment of the day, eight iOS screens each.</span></li>
+          <li><span class="label">3. Read</span><span class="muted">Claude looked at all 32 screens and named what kept repeating. Eight patterns survived.</span></li>
+          <li><span class="label">4. Moodboard</span><span class="muted">One tile per pattern, each linked to the screens it came from.</span></li>
+          <li><span class="label">5. Language and rules</span><span class="muted">The look (ground, cards, accent, type) taken from what the apps share. Six guidelines from where they differ.</span></li>
+          <li><span class="label">6. Prototype</span><span class="muted">Three screens, built to the language and the rules, checked in a browser, then cut back.</span></li>
+        </ol>
+      </div>
+    </section>
+
     <section class="grid4" id="research" aria-labelledby="research-h">
       <div class="section-head"><p class="label muted">01</p><h2 class="label" id="research-h">Research</h2></div>
-      <div class="section-body" style="display: grid; gap: var(--space-s)">
-        <p class="big">Four searches on Mobbin, eight iOS screens each, read one by one. The question was simple: what does a fitness app say to you on an ordinary day?</p>
-        <ul class="facts">
-          <li><span class="label">The day</span><span class="muted">Activity summaries with rings, bars and steps. Apple Fitness, Garmin Connect, Fitbit, Bevel, Gentler Streak.</span></li>
-          <li><span class="label">The body</span><span class="muted">Readiness and recovery scores and how they are explained. Oura, WHOOP, Visible, Tempo, Ultrahuman.</span></li>
-          <li><span class="label">The session</span><span class="muted">Screens while you train, and the screen right after. Peloton, Ladder, Runna, Hevy, Strava.</span></li>
-        </ul>
+      <div class="section-body">
+        <p class="big">32 screens from 22 apps, including Apple Fitness, Garmin Connect, Fitbit, Oura, WHOOP, Bevel, Visible, Gentler Streak, Peloton, Ladder, Runna, Hevy and Strava. These were the searches, word for word:</p>
+        <ol class="queries">
+          <li><code>daily activity summary with progress rings or bars for steps, workouts and sleep</code></li>
+          <li><code>workout in progress screen with large timer, current exercise and next exercise</code></li>
+          <li><code>recovery or readiness score screen with explanation of sleep and heart rate variability</code></li>
+          <li><code>workout complete summary screen with duration, effort and a short reflection</code></li>
+        </ol>
       </div>
     </section>
 
     <section class="grid4" id="moodboard" aria-labelledby="mood-h">
-      <div class="section-head" style="grid-column: 1 / -1"><p class="label muted">02</p><h2 class="label" id="mood-h">Moodboard</h2><p class="muted">Eight patterns that kept showing up, sketched rather than screenshotted. The links open the screens on Mobbin.</p></div>
-      <div id="tiles" class="grid4" style="grid-column: 1 / -1"></div>
-      <div class="swatches" aria-label="Prototype palette">
-        <div class="swatch"><i style="background:#f3f0e9"></i><span class="label">Paper</span><span class="muted">#F3F0E9, for reading</span></div>
-        <div class="swatch"><i style="background:#77746c"></i><span class="label">Stone</span><span class="muted">#77746C, for the quiet words</span></div>
-        <div class="swatch"><i style="background:#121412"></i><span class="label">Night</span><span class="muted">#121412, for the session</span></div>
-        <div class="swatch"><i style="background:#4d6b52"></i><span class="label">Moss</span><span class="muted">#4D6B52, used once a screen</span></div>
+      <div class="section-head wide"><p class="label muted">02</p><h2 class="label" id="mood-h">Moodboard</h2><p class="muted">Eight patterns that kept showing up, sketched here. The links open the original screens on Mobbin.</p></div>
+      <div id="tiles" class="grid4 wide"></div>
+    </section>
+
+    <section class="grid4" id="language" aria-labelledby="lang-h">
+      <div class="section-head"><p class="label muted">03</p><h2 class="label" id="lang-h">Visual language</h2></div>
+      <div class="section-body">
+        <p class="big">What most of the apps share became the prototype’s look. None of it comes from my own style.</p>
+        <ul class="lang">
+          <li><span class="label">Light ground, white cards</span><span class="muted">Bevel, Fitbit, Future and Fi put content on rounded white cards over a pale grey.</span><span>Ground #F2F2F4, cards with 20px corners.</span></li>
+          <li><span class="label">Black while you train</span><span class="muted">Peloton, Ladder and Gymshark go dark during a session, so you can read it from the floor.</span><span>Session screen in pure black.</span></li>
+          <li><span class="label">One bright accent</span><span class="muted">Lime and green recur: Bevel’s rings, Ladder’s gauge, Peloton Strength+ and Runna.</span><span>Lime #C6F24E, green #1F9D55 for text.</span></li>
+          <li><span class="label">Big, heavy numbers</span><span class="muted">Every app sets its key number large and bold, often in a rounded face.</span><span>Rounded system type, 700 weight.</span></li>
+          <li><span class="label">Pill buttons, floating tabs</span><span class="muted">Visible, Tempo and Runna use full pills. Apple Fitness and Gentler Streak float the tab bar.</span><span>Pills everywhere, a floating tab bar.</span></li>
+          <li><span class="label">Rest in blue</span><span class="muted">Runna marks rest in blue, apart from the work.</span><span>Rest #6AA8FF.</span></li>
+        </ul>
+        <div class="swatches" aria-label="Prototype palette">
+          <div class="swatch"><i style="background:#f2f2f4"></i><span class="label">Ground</span><span class="muted">#F2F2F4</span></div>
+          <div class="swatch"><i style="background:#111113"></i><span class="label">Ink</span><span class="muted">#111113</span></div>
+          <div class="swatch"><i style="background:#c6f24e"></i><span class="label">Lime</span><span class="muted">#C6F24E</span></div>
+          <div class="swatch"><i style="background:#6aa8ff"></i><span class="label">Rest</span><span class="muted">#6AA8FF</span></div>
+        </div>
       </div>
     </section>
 
     <section class="grid4" id="guidelines" aria-labelledby="guide-h">
-      <div class="section-head" style="grid-column: 1 / -1"><p class="label muted">03</p><h2 class="label" id="guide-h">Guidelines</h2></div>
+      <div class="section-head wide"><p class="label muted">04</p><h2 class="label" id="guide-h">Guidelines</h2><p class="muted">Where the apps differ, these pick a side.</p></div>
       <ol class="rules">
-        <li><span class="label">Say it in words first</span><span class="muted">“A steady day” before any number. Most apps lead with a score; the best ones (Visible, Tempo) add a word. Lead with the word.</span></li>
-        <li><span class="label">Compare to your usual</span><span class="muted">A dashed line for your own normal beats a ring for someone else’s goal. Gentler Streak’s “above typical Friday” is the model.</span></li>
-        <li><span class="label">Three reasons, in plain rows</span><span class="muted">Why today looks like this, as three short sentences with a direction. Never a wall of metrics.</span></li>
-        <li><span class="label">Time, now, next</span><span class="muted">While you train, the screen shows the clock, what you are doing and what comes after. Nothing else competes.</span></li>
-        <li><span class="label">Rest is a state, not a wait</span><span class="muted">Rest gets its own calm colour and a kind word. It is part of the session, not a gap in it.</span></li>
-        <li><span class="label">End with a question</span><span class="muted">Skip the confetti. Ask how it felt, and let the answer shape tomorrow. That is the reward.</span></li>
+        <li><span class="label">Say it in words first</span><span class="muted">Most apps lead with a score. Visible and Tempo add a word. Lead with the word: “Steady” before any number.</span></li>
+        <li><span class="label">Compare to your usual</span><span class="muted">Keep the ring everyone knows, but measure it against your own normal, the way Gentler Streak compares to a typical Friday.</span></li>
+        <li><span class="label">Three reasons, in plain rows</span><span class="muted">Why today looks like this, as three short sentences with a direction, like Visible. Not a wall of metrics, like WHOOP.</span></li>
+        <li><span class="label">Time, now, next</span><span class="muted">While you train: the clock, the move and what comes after, as Peloton and Ladder do. Nothing else competes.</span></li>
+        <li><span class="label">Rest is a state, not a wait</span><span class="muted">Rest gets its own colour and a kind word. It is part of the session, not a gap in it.</span></li>
+        <li><span class="label">End with a question</span><span class="muted">Skip the confetti of Hevy and Bevel. Ask how it felt, like Runna, and let the answer shape tomorrow.</span></li>
       </ol>
     </section>
 
     <section class="grid4" id="prototype" aria-labelledby="proto-h">
-      <div class="section-head" style="grid-column: 1 / -1"><p class="label muted">04</p><h2 class="label" id="proto-h">Prototype</h2><p class="muted">Sample data only. Pick a morning, start the session (its blocks are short for the demo), and answer the last question.</p></div>
+      <div class="section-head wide"><p class="label muted">05</p><h2 class="label" id="proto-h">Prototype</h2><p class="muted">Sample data only. Pick a morning, start the session (its blocks are short for the demo), and answer the last question.</p></div>
       <div class="proto-stage">
         <div class="chips" role="group" aria-label="Sample morning">
           <button class="chip" type="button" data-day="rested" aria-pressed="false">Rested</button>
@@ -192,52 +264,95 @@
         <div class="phone" id="phone">
           <!-- Today -->
           <div class="scr" id="s-today" aria-label="Today">
-            <p class="p-muted" id="t-date">Saturday morning</p>
-            <p class="p-big" id="t-word">A steady day</p>
-            <div class="glow" aria-hidden="true">
-              <i id="t-glow"></i>
-              <svg viewBox="0 0 300 60" preserveAspectRatio="none"><line x1="0" x2="300" y1="30" y2="30" stroke="#1d1d1b" stroke-opacity="0.35" stroke-dasharray="3 5" vector-effect="non-scaling-stroke"/><path id="t-line" fill="none" stroke="#1d1d1b" stroke-width="1.5" vector-effect="non-scaling-stroke"/><circle id="t-dot" r="4" fill="#4d6b52"/></svg>
+            <div class="bar-top" aria-hidden="true"><span>9:41</span><span>●●●</span></div>
+            <div class="scroll">
+              <div><p class="a-eyebrow">Saturday</p><p class="a-title">Today</p></div>
+              <div class="a-card">
+                <div class="ring-wrap" aria-hidden="true">
+                  <svg viewBox="0 0 200 200">
+                    <defs><linearGradient id="g-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f9d55"/><stop offset="1" stop-color="#c6f24e"/></linearGradient></defs>
+                    <circle cx="100" cy="100" r="84" fill="none" stroke="#ececf0" stroke-width="18"/>
+                    <circle class="arc" id="t-arc" cx="100" cy="100" r="84" fill="none" stroke="url(#g-ring)" stroke-width="18" stroke-linecap="round" transform="rotate(-90 100 100)" stroke-dasharray="527.8" stroke-dashoffset="527.8"/>
+                    <line id="t-usual" x1="100" y1="6" x2="100" y2="30" stroke="#111113" stroke-width="3" stroke-linecap="round"/>
+                  </svg>
+                  <div class="ring-c"><span class="ring-word" id="t-word">Steady</span><span class="ring-sub">vs your usual</span></div>
+                </div>
+                <p class="compare" id="t-compare">About your usual for a Saturday.</p>
+              </div>
+              <p class="tomorrow" id="t-tomorrow" hidden></p>
+              <div class="a-card">
+                <p class="a-label">Suggested</p>
+                <div class="plan">
+                  <div><p class="plan-name" id="t-plan">Easy strength</p><p class="ring-sub" id="t-plan-sub">20 min · three moves</p></div>
+                  <button class="a-btn" type="button" id="start">Start</button>
+                </div>
+              </div>
+              <div class="a-card">
+                <p class="a-label">Why</p>
+                <ul class="why" id="t-why"></ul>
+              </div>
             </div>
-            <p class="p-muted" id="t-compare">About your usual. The dashed line is your normal over two weeks.</p>
-            <ul class="why" id="t-why"></ul>
-            <p class="tomorrow" id="t-tomorrow" hidden></p>
-            <div class="suggest">
-              <div><p class="p-label" id="t-plan">Easy strength</p><p class="p-muted" id="t-plan-sub">20 minutes, three moves</p></div>
-              <button class="p-btn" type="button" id="start">Start</button>
-            </div>
+            <nav class="tabbar" aria-label="Sample tabs">
+              <span class="tab on"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>Today</span>
+              <span class="tab"><svg viewBox="0 0 24 24"><path d="M6 8v8M18 8v8M3 10v4M21 10v4M6 12h12"/></svg>Train</span>
+              <span class="tab"><svg viewBox="0 0 24 24"><path d="M5 19V11M12 19V5M19 19v-6"/></svg>Progress</span>
+            </nav>
           </div>
           <!-- Session -->
           <div class="scr dark" id="s-session" aria-label="Session" hidden>
+            <div class="bar-top" aria-hidden="true"><span>9:41</span><span>●●●</span></div>
             <div class="segs" id="segs" aria-hidden="true"></div>
-            <p class="p-muted" id="x-plan">Easy strength</p>
-            <p class="timer" id="x-timer" role="timer" aria-live="off">0:20</p>
-            <div class="now" id="x-now" aria-live="polite"><p class="p-big" id="x-name">Warm up</p><p class="p-muted" id="x-detail">March in place</p></div>
-            <p class="next p-muted"><span>Next</span><span id="x-next" style="color: var(--paper)">Goblet squat</span></p>
-            <div class="acts">
-              <button class="p-btn quiet" type="button" id="pause">Pause</button>
-              <button class="p-btn quiet" type="button" id="skip">Skip</button>
-              <button class="p-btn quiet" type="button" id="end">End</button>
+            <div class="s-head"><span id="x-plan">Easy strength</span><span id="x-count">1 of 6</span></div>
+            <div class="clock">
+              <svg viewBox="0 0 200 200" aria-hidden="true">
+                <circle cx="100" cy="100" r="92" fill="none" stroke="#1c1c1e" stroke-width="10"/>
+                <circle class="arc" id="x-arc" cx="100" cy="100" r="92" fill="none" stroke="#c6f24e" stroke-width="10" stroke-linecap="round" stroke-dasharray="578" stroke-dashoffset="0"/>
+              </svg>
+              <p class="timer" id="x-timer" role="timer" aria-live="off">0:20</p>
+            </div>
+            <div class="move" id="x-now" aria-live="polite"><p class="move-name" id="x-name">Warm up</p><p class="move-detail" id="x-detail">March in place</p></div>
+            <p class="next"><b>Next</b><span aria-hidden="true">→</span><span id="x-next">Goblet squat</span></p>
+            <div class="controls">
+              <button class="round" type="button" id="end" aria-label="End session"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+              <button class="round main" type="button" id="pause" aria-label="Pause"><svg viewBox="0 0 24 24" id="pause-icon"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+              <button class="round" type="button" id="skip" aria-label="Skip to next"><svg viewBox="0 0 24 24"><path d="M5 5l10 7-10 7zM17 5h2v14h-2z"/></svg></button>
             </div>
           </div>
           <!-- Done -->
           <div class="scr" id="s-done" aria-label="Done" hidden>
-            <p class="p-muted" id="d-plan">Easy strength</p>
-            <p class="p-big">Done. You moved for <span id="d-time">0:00</span>.</p>
-            <p class="p-label" style="margin-top: 24px">How did that feel?</p>
-            <div class="feel" role="group" aria-label="How did that feel?">
-              <button class="p-btn quiet" type="button" data-feel="easy" aria-pressed="false">Easy</button>
-              <button class="p-btn quiet" type="button" data-feel="right" aria-pressed="false">About right</button>
-              <button class="p-btn quiet" type="button" data-feel="hard" aria-pressed="false">Hard</button>
+            <div class="bar-top" aria-hidden="true"><span>9:41</span><span>●●●</span></div>
+            <div class="scroll" style="padding-bottom: 24px">
+              <div class="done-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+              <div><p class="a-eyebrow" id="d-plan">Easy strength</p><p class="a-title">Done</p><p class="ring-sub" style="font-size:17px;margin-top:4px">You moved for <span id="d-time">0:00</span>.</p></div>
+              <div class="a-card">
+                <p class="plan-name">How did that feel?</p>
+                <div class="feel" role="group" aria-label="How did that feel?">
+                  <button type="button" data-feel="easy" aria-pressed="false">Easy</button>
+                  <button type="button" data-feel="right" aria-pressed="false">About right</button>
+                  <button type="button" data-feel="hard" aria-pressed="false">Hard</button>
+                </div>
+                <p class="reply" id="d-reply" aria-live="polite"></p>
+              </div>
             </div>
-            <p class="reply" id="d-reply" aria-live="polite"></p>
-            <button class="p-btn" type="button" id="home" style="margin-top: auto" disabled>Back to today</button>
+            <div style="padding: 0 16px 34px"><button class="a-btn" type="button" id="home" style="width:100%" disabled>Back to today</button></div>
           </div>
         </div>
       </div>
       <div class="proto-notes" id="notes">
-        <div class="note" data-for="today"><p class="label">Today</p><p class="muted">The word comes first and the soft light grows or shrinks with it. Below it, one line against your own dashed normal, and three plain reasons. One suggestion, one button. Guidelines 01, 02 and 03.</p></div>
-        <div class="note dim" data-for="session"><p class="label">Session</p><p class="muted">Dark, because you glance at it from a mat. The clock, the move and what comes next. Rest turns the move name pale green and says something kind. Guidelines 04 and 05.</p></div>
-        <div class="note dim" data-for="done"><p class="label">Done</p><p class="muted">No confetti, no calories. One honest number and one question, and the answer changes what tomorrow suggests. Guideline 06.</p></div>
+        <div class="note" data-for="today"><p class="label">Today</p><p class="muted">One ring, because every app has one, but with a mark for your usual and a word in the middle instead of a score. One suggestion with one pill, then three reasons in rows. Guidelines 01, 02 and 03.</p></div>
+        <div class="note dim" data-for="session"><p class="label">Session</p><p class="muted">Black, with a segmented bar on top and a ring around the clock, like Peloton and Ladder. The move, then what comes next. Rest turns the ring and the move name blue. Guidelines 04 and 05.</p></div>
+        <div class="note dim" data-for="done"><p class="label">Done</p><p class="muted">A check mark, not confetti. One honest number and one question, and your answer changes tomorrow’s suggestion. Guideline 06.</p></div>
+      </div>
+    </section>
+
+    <section class="grid4" id="kept" aria-labelledby="kept-h">
+      <div class="section-head"><p class="label muted">06</p><h2 class="label" id="kept-h">Kept and cut</h2></div>
+      <div class="section-body">
+        <ul class="three">
+          <li><span class="label">Kept</span><span class="muted">The ring, the light cards, the black session screen, the segmented bar, the “next” row, pill buttons and the floating tab bar. They’re familiar for a reason.</span></li>
+          <li><span class="label">Changed</span><span class="muted">The score became a word. The goal became your usual. Rest got its own colour. Confetti became a question.</span></li>
+          <li><span class="label">Cut</span><span class="muted">Calories, streak counters, share sheets, trainer video, three rings at once and long lists of metrics. Each one asks for attention the moment doesn’t need.</span></li>
+        </ul>
       </div>
     </section>
   </main>
