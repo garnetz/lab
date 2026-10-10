@@ -1,4 +1,4 @@
-// A calmer fitness app: moodboard tiles and the prototype. Sample data only.
+// Research to prototype: a fitness study. Moodboard tiles and the prototype. Sample data only.
 (() => {
   const M = 'https://mobbin.com/screens/';
   const S = 'fill="none" stroke="currentColor" stroke-width="2" vector-effect="non-scaling-stroke"';
@@ -67,35 +67,44 @@
 
   // ---- Prototype ----
   const $ = (id) => document.getElementById(id);
+  const RING = 527.8, CLOCK = 578, USUAL = 0.62;
   const DAYS = {
     rested: {
-      word: 'A strong day', compare: 'A little above your usual. The dashed line is your normal over two weeks.',
-      glow: 1.15, line: [0, 2, -1, 1, 0, -2, 1, 0, 2, 1, -1, 2, 4, 7],
-      why: [['↑', 'You slept longer than usual.'], ['→', 'Your resting heart rate is about normal.'], ['↓', 'Last week was lighter than usual.']],
-      plan: 'Strength', sub: '25 minutes, four moves',
-      blocks: [['Warm up', 'March in place', 15], ['Goblet squat', '10 reps, slow down', 25], ['Rest', 'Shake it out', 10], ['Push up', '8 reps, knees are fine', 25], ['Rest', 'Breathe out longer than in', 10], ['Split squat', '8 each side', 25], ['Cool down', 'Long, easy stretch', 15]],
+      word: 'Strong', fill: 0.82, compare: 'A little above your usual for a Saturday.',
+      why: [['↑', 'You slept longer than usual.', 'up'], ['→', 'Your resting heart rate is about normal.', ''], ['↓', 'Last week was lighter than usual.', '']],
+      plan: 'Strength', sub: '25 min · four moves',
+      blocks: [['Warm up', 'March in place', 15], ['Goblet squat', '10 reps, slow on the way down', 25], ['Rest', 'Shake it out', 10], ['Push up', '8 reps, knees are fine', 25], ['Rest', 'Breathe out longer than in', 10], ['Split squat', '8 each side', 25], ['Cool down', 'Long, easy stretch', 15]],
     },
     usual: {
-      word: 'A steady day', compare: 'About your usual. The dashed line is your normal over two weeks.',
-      glow: 1, line: [0, 2, -1, 1, 0, -2, 1, 0, 2, 1, -1, 1, 0, 1],
-      why: [['→', 'You slept about as long as usual.'], ['→', 'Your resting heart rate is about normal.'], ['→', 'Last week looked like most weeks.']],
-      plan: 'Easy strength', sub: '20 minutes, three moves',
-      blocks: [['Warm up', 'March in place', 15], ['Goblet squat', '10 reps, slow down', 25], ['Rest', 'Shake it out', 10], ['Glute bridge', '12 reps', 25], ['Rest', 'Breathe out longer than in', 10], ['Cool down', 'Long, easy stretch', 15]],
+      word: 'Steady', fill: USUAL, compare: 'About your usual for a Saturday.',
+      why: [['→', 'You slept about as long as usual.', ''], ['→', 'Your resting heart rate is about normal.', ''], ['→', 'Last week looked like most weeks.', '']],
+      plan: 'Easy strength', sub: '20 min · three moves',
+      blocks: [['Warm up', 'March in place', 15], ['Goblet squat', '10 reps, slow on the way down', 25], ['Rest', 'Shake it out', 10], ['Glute bridge', '12 reps', 25], ['Rest', 'Breathe out longer than in', 10], ['Cool down', 'Long, easy stretch', 15]],
     },
     tired: {
-      word: 'Take it easy today', compare: 'Below your usual. Rest counts as training too.',
-      glow: 0.75, line: [0, 2, -1, 1, 0, -2, 1, 0, 2, 1, -1, -2, -4, -6],
-      why: [['↓', 'You slept less than usual.'], ['↑', 'Your resting heart rate is a little higher.'], ['↑', 'Last week was harder than usual.']],
-      plan: 'Mobility', sub: '15 minutes, gentle',
+      word: 'Go easy', fill: 0.38, compare: 'Below your usual. Rest counts as training too.',
+      why: [['↓', 'You slept less than usual.', ''], ['↑', 'Your resting heart rate is a little higher.', ''], ['↑', 'Last week was harder than usual.', '']],
+      plan: 'Mobility', sub: '15 min · gentle',
       blocks: [['Breathe', 'Lie down, slow breaths', 15], ['Cat and cow', 'Move with the breath', 20], ['Rest', 'Stay where you are', 10], ['Hip opener', 'Each side, no rush', 20], ['Cool down', 'Long, easy stretch', 15]],
     },
   };
   const NUDGE = { easy: 'a little harder', right: 'about the same', hard: 'a little lighter' };
   const REPLY = {
-    easy: 'Good to know. Tomorrow’s suggestion will ask a little more of you.',
+    easy: 'Good to know. Tomorrow will ask a little more of you.',
     right: 'That’s the sweet spot. Tomorrow keeps the same pace.',
     hard: 'Thanks for saying so. Tomorrow starts a little lighter.',
   };
+  const PAUSE_ICON = '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>';
+  const PLAY_ICON = '<path d="M7 4.5v15l12-7.5z"/>';
+
+  // The usual mark sits on the ring at USUAL of the way round.
+  (() => {
+    const a = USUAL * Math.PI * 2 - Math.PI / 2, c = 100;
+    const p = (r) => [c + r * Math.cos(a), c + r * Math.sin(a)];
+    const [x1, y1] = p(72), [x2, y2] = p(96);
+    const l = $('t-usual');
+    l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+  })();
 
   let day = 'usual', feel = null, lastFeel = null;
   const screens = { today: $('s-today'), session: $('s-session'), done: $('s-done') };
@@ -103,21 +112,18 @@
     for (const [k, el] of Object.entries(screens)) el.hidden = k !== name;
     document.querySelectorAll('.note').forEach((n) => n.classList.toggle('dim', n.dataset.for !== name));
     const first = screens[name].querySelector('button:not([disabled])');
-    if (first && document.activeElement && document.getElementById('phone').contains(document.activeElement)) first.focus();
+    if (first && $('phone').contains(document.activeElement)) first.focus();
   }
 
   function renderToday() {
     const d = DAYS[day];
     $('t-word').textContent = d.word;
     $('t-compare').textContent = d.compare;
-    $('t-glow').style.setProperty('--s', d.glow);
-    $('t-glow').style.setProperty('--o', 0.55 + 0.45 * (d.glow - 0.75) / 0.4);
-    const pts = d.line.map((v, i) => [i * (300 / (d.line.length - 1)), 30 - v * 3.2]);
-    $('t-line').setAttribute('d', 'M' + pts.map((p) => p.join(' ')).join(' L'));
-    const [lx, ly] = pts[pts.length - 1];
-    $('t-dot').setAttribute('cx', lx); $('t-dot').setAttribute('cy', ly);
-    $('t-why').innerHTML = d.why.map(([a, t]) => `<li><b aria-hidden="true">${a}</b><span>${t}</span></li>`).join('');
-    $('t-plan').textContent = d.plan; $('t-plan-sub').textContent = d.sub;
+    $('t-arc').style.strokeDashoffset = RING * (1 - d.fill);
+    $('t-why').innerHTML = d.why.map(([a, t, c]) => `<li><i class="${c}" aria-hidden="true">${a}</i><span>${t}</span></li>`).join('');
+    const shift = { easy: 5, right: 0, hard: -5 }[lastFeel] || 0;
+    $('t-plan').textContent = d.plan;
+    $('t-plan-sub').textContent = d.sub.replace(/^(\d+)/, (m) => String(Number(m) + shift));
     const tm = $('t-tomorrow');
     tm.hidden = !lastFeel;
     if (lastFeel) tm.textContent = `You said yesterday felt ${lastFeel === 'right' ? 'about right' : lastFeel}, so today’s suggestion is ${NUDGE[lastFeel]}.`;
@@ -129,14 +135,17 @@
   }));
 
   // Session: a simple block timer.
-  let i = 0, left = 0, total = 0, timer = null, paused = false, startedAt = 0, moved = 0;
+  let i = 0, left = 0, timer = null, paused = false, moved = 0;
   const fmt = (s) => { const t = Math.max(0, Math.ceil(s)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
   function block() {
     const b = DAYS[day].blocks;
     const [name, detail, secs] = b[i];
     left = secs;
+    const rest = name === 'Rest';
     $('x-name').textContent = name; $('x-detail').textContent = detail;
-    $('x-now').classList.toggle('rest', name === 'Rest');
+    $('x-now').classList.toggle('rest', rest);
+    $('x-arc').style.stroke = rest ? '#6aa8ff' : '#c6f24e';
+    $('x-count').textContent = `${i + 1} of ${b.length}`;
     $('x-next').textContent = b[i + 1] ? b[i + 1][0] : 'Done';
     $('segs').innerHTML = b.map((_, k) => `<i class="${k < i ? 'done' : ''}">${k === i ? '<b></b>' : ''}</i>`).join('');
     tick(0);
@@ -144,19 +153,24 @@
   function tick(dt) {
     left -= dt;
     const secs = DAYS[day].blocks[i][2];
-    $('x-timer').textContent = fmt(Math.max(0, left));
+    const p = Math.min(1, Math.max(0, 1 - left / secs));
+    $('x-timer').textContent = fmt(left);
+    $('x-arc').style.strokeDashoffset = CLOCK * p;
     const bar = $('segs').querySelector('b');
-    if (bar) bar.style.setProperty('--p', Math.min(1, 1 - left / secs));
+    if (bar) bar.style.setProperty('--p', p);
     if (left <= 0) next();
   }
-  function next() {
-    if (i < DAYS[day].blocks.length - 1) { i++; block(); } else finish();
-  }
+  function next() { if (i < DAYS[day].blocks.length - 1) { i++; block(); } else finish(); }
   function run() {
     let last = performance.now();
     timer = setInterval(() => { const now = performance.now(); if (!paused) { moved += (now - last) / 1000; tick((now - last) / 1000); } last = now; }, 200);
   }
   function stop() { clearInterval(timer); timer = null; }
+  function setPaused(on) {
+    paused = on;
+    $('pause-icon').innerHTML = on ? PLAY_ICON : PAUSE_ICON;
+    $('pause').setAttribute('aria-label', on ? 'Resume' : 'Pause');
+  }
   function finish() {
     stop();
     $('d-plan').textContent = DAYS[day].plan;
@@ -166,11 +180,11 @@
     show('done');
   }
   $('start').addEventListener('click', () => {
-    i = 0; moved = 0; paused = false; $('pause').textContent = 'Pause';
+    i = 0; moved = 0; setPaused(false);
     $('x-plan').textContent = DAYS[day].plan;
     block(); show('session'); run();
   });
-  $('pause').addEventListener('click', () => { paused = !paused; $('pause').textContent = paused ? 'Resume' : 'Pause'; });
+  $('pause').addEventListener('click', () => setPaused(!paused));
   $('skip').addEventListener('click', next);
   $('end').addEventListener('click', finish);
 
