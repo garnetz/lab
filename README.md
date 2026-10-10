@@ -7,6 +7,7 @@ Each folder is one experiment you can run on its own. The write-ups live at [arn
 | Experiment | What it is |
 | --- | --- |
 | [Ask me about my work](ask-me-about-my-work) | A voice prototype: ask a portfolio a question out loud and hear the answer, powered by Claude. |
+| [The states between the words](states-between-the-words) | The same AI wait filled two ways, a bare spinner and designed states, so you can feel the difference. |
 
 ## Licence
 
