@@ -8,6 +8,7 @@ Each folder is one experiment you can run on its own. The write-ups live at [arn
 | --- | --- |
 | [Ask me about my work](ask-me-about-my-work) | A voice prototype: ask a portfolio a question out loud and hear the answer, powered by Claude. |
 | [The states between the words](states-between-the-words) | The same AI wait filled two ways, a bare spinner and designed states, so you can feel the difference. |
+| [Voice orbs](voice-orbs) | Twelve visual directions for a voice assistant's presence, all reacting to the same conversation moments. |
 
 ## Licence
 
