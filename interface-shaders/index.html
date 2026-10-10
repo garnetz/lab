@@ -4,95 +4,315 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Shaders for interfaces</title>
-  <meta name="description" content="Six small shaders an interface could use, each live with a few dials and its code underneath." />
+  <meta name="description" content="Six shaders, each placed in a real screen and driven by its states: sign in, a dialog, a button, a loading list, a photo and a payment." />
   <style>
-  /* One dark stage: the shaders are light on dark, so the page commits to a single dark look. */
+  /* One dark stage: the shaders are light on dark, so the page commits to a single dark look.
+     Grid, type and spacing follow design-rules/SKILL.md. */
   :root {
     color-scheme: dark;
     --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px;
   }
+  @media (max-width: 1199.98px) { :root { --margin: 24px; --gap: 24px; --h3: 40px; --space-l: 96px; --space-m: 64px; } }
+  @media (max-width: 809.98px) { :root { --margin: 16px; --gap: 16px; --h3: 32px; --space-l: 64px; --space-m: 48px; --space-s: 24px; } }
   * { box-sizing: border-box; margin: 0; }
-  body { background: var(--bg); color: var(--ink); font: 200 16px/1.5 ui-sans-serif, system-ui, sans-serif; padding: 0 16px 64px; }
-  .page { max-width: 1200px; margin-inline: auto; padding-block: 64px 0; display: grid; gap: 64px; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.4 ui-sans-serif, system-ui, sans-serif; padding-block: 0 var(--space-l); }
+  .page { max-width: 1440px; margin-inline: auto; padding-inline: var(--margin); padding-block: var(--space-m) 0; display: grid; gap: var(--space-l); }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-m) var(--gap); }
   .muted { color: var(--muted); }
-  .label { font-weight: 400; }
-  .h3 { font-size: clamp(32px, 6vw, 48px); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
-  .intro { display: grid; gap: 12px; max-width: 720px; }
-  .intro p { max-width: 52ch; }
-  .bar { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip { font: inherit; color: var(--ink); background: none; border: 1px solid var(--surface); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+  .label { font-size: 16px; line-height: 1.2; font-weight: 400; }
+  .h3 { font-size: var(--h3); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  .big { font-size: 24px; font-weight: 200; line-height: 1.4; }
+  p { text-wrap: pretty; }
+  button, input { font: inherit; color: inherit; }
+
+  .intro { align-items: baseline; row-gap: var(--space-s); }
+  .intro > .label { grid-column: 1; }
+  .intro .body { grid-column: 2 / span 2; display: grid; gap: 16px; justify-items: start; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: none; border: 1px solid var(--surface); border-radius: 4px; min-height: 44px; padding: 8px 16px; cursor: pointer; transition: background 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease); }
   .chip:hover { border-color: var(--muted); }
-  .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); font-weight: 400; }
-  .chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-  .grid { display: grid; gap: 40px; }
-  @media (min-width: 834px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  .study { display: grid; gap: 16px; align-content: start; min-width: 0; }
-  .study canvas { width: 100%; aspect-ratio: 4 / 3; display: block; border-radius: 16px; background: #0a0a0b; touch-action: none; cursor: crosshair; }
-  .study canvas.no-gl { background: linear-gradient(135deg, #1a1a1a, #0a0a0b); }
-  .head { display: grid; gap: 2px; }
-  .dials { display: grid; gap: 8px 24px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  /* Two studies per row, each across two columns. */
+  .study { grid-column: span 2; display: grid; gap: 16px; align-content: start; min-width: 0; }
+  @media (max-width: 809.98px) { .study { grid-column: 1 / -1; } .intro > .label, .intro .body { grid-column: 1 / -1; } }
+  @media (min-width: 810px) and (max-width: 1199.98px) { .intro .body { grid-column: 2 / -1; } }
+  .head { display: grid; gap: 4px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+
+  /* The screen: a shader with real interface on top. */
+  .screen { position: relative; aspect-ratio: 4 / 3; border-radius: 4px; overflow: hidden; background: #0a0a0b; container-type: inline-size; }
+  .screen canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .screen canvas.no-gl { background: linear-gradient(135deg, #1a1a1a, #0a0a0b); }
+  .ui { position: absolute; inset: 0; }
+  .fade { transition: opacity 0.6s var(--ease), transform 0.6s var(--ease); }
+  .gone { opacity: 0; pointer-events: none; }
+  .btn { background: var(--ink); color: var(--bg); border: 0; border-radius: 4px; min-height: 44px; padding: 10px 20px; cursor: pointer; font-weight: 400; transition: background 0.2s var(--ease), transform 0.2s var(--ease); }
+  .btn.ghost { background: none; color: var(--ink); border: 1px solid rgb(255 255 255 / 0.25); }
+  .btn.danger { background: var(--accent); color: #fff; }
+  .btn:active { transform: scale(0.98); }
+
+  /* Sign in */
+  .signin { display: grid; place-content: center; gap: 16px; padding: 24px; width: min(100%, 360px); margin: auto; height: 100%; }
+  .signin input { width: 100%; min-height: 44px; padding: 10px 14px; border-radius: 4px; border: 1px solid rgb(255 255 255 / 0.25); background: rgb(0 0 0 / 0.35); }
+  .signin input::placeholder { color: var(--muted); }
+
+  /* Dialog: matches the glass panel the shader draws (60% wide, 52% tall, centred). */
+  .dialog { position: absolute; left: 20%; top: 24%; width: 60%; height: 52%; display: grid; align-content: center; gap: 8px; padding: 6%; }
+  .dialog .acts { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .opener { position: absolute; left: 16px; bottom: 16px; }
+
+  /* Spotlight */
+  .centre { display: grid; place-items: center; height: 100%; }
+
+  /* Loading list: rows land where the skeleton was. */
+  .list .item { position: absolute; left: 19.25%; width: 61%; height: 14%; display: grid; grid-template-columns: 10.5cqw 1fr; column-gap: 4.6cqw; align-items: center; }
+  .list .avatar { width: 10.5cqw; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: var(--surface); }
+  .list .item:nth-child(1) { top: 19%; } .list .item:nth-child(2) { top: 43%; } .list .item:nth-child(3) { top: 67%; }
+  .list .item:nth-child(2) { transition-delay: 80ms; } .list .item:nth-child(3) { transition-delay: 160ms; }
+  .slow { position: absolute; left: 16px; right: 16px; bottom: 16px; }
+
+  /* Photo caption and pay button */
+  .caption { position: absolute; left: 16px; bottom: 16px; right: 16px; display: flex; justify-content: space-between; gap: 16px; text-shadow: 0 1px 8px rgb(0 0 0 / 0.6); }
+  .pay { display: grid; place-items: center; align-content: center; gap: 12px; height: 100%; text-align: center; }
+  .pay .btn { min-width: 160px; }
+
+  .more summary { cursor: pointer; color: var(--muted); }
+  .more summary:hover { color: var(--ink); }
+  .more[open] { display: grid; gap: 16px; }
+  .dials { display: grid; gap: 8px 24px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 16px; }
   @media (max-width: 520px) { .dials { grid-template-columns: 1fr; } }
-  .dial { display: grid; gap: 4px; font-size: 14px; }
+  .dial { display: grid; gap: 4px; }
   .dial input { width: 100%; accent-color: var(--accent); }
-  .code summary { cursor: pointer; font-size: 14px; color: var(--muted); }
-  .code summary:hover { color: var(--ink); }
-  .code pre { margin-top: 8px; padding: 16px; border: 1px solid var(--surface); border-radius: 12px; overflow-x: auto; font: 12px/1.55 ui-monospace, 'SF Mono', Menlo, monospace; color: var(--muted); max-height: 360px; }
+  .code { padding: 16px; border: 1px solid var(--surface); border-radius: 4px; overflow-x: auto; font: 200 16px/1.5 ui-monospace, 'SF Mono', Menlo, monospace; color: var(--muted); max-height: 420px; }
 
-  .what { display: grid; gap: 12px; }
-  .principles { list-style: none; padding: 0; display: grid; gap: 24px; }
-  @media (min-width: 834px) { .principles { grid-template-columns: repeat(4, 1fr); gap: 40px; } }
-  .principles li { display: grid; gap: 4px; align-content: start; }
+  .what { row-gap: var(--space-s); }
+  .what > .label { grid-column: 1 / -1; }
+  .what li { list-style: none; display: grid; gap: 8px; align-content: start; }
+  .what ul { display: contents; padding: 0; }
+  @media (max-width: 1199.98px) { .what li { grid-column: span 2; } }
+  @media (max-width: 809.98px) { .what li { grid-column: 1 / -1; } }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
   </style>
 </head>
 <body>
   <main class="page">
-    <header class="intro">
+    <header class="intro grid4">
       <p class="label muted">Lab</p>
-      <h1 class="h3">Shaders for interfaces</h1>
-      <p class="muted">Six small shaders an interface could actually use: a background, a glass panel, a light that follows you, a loading state, a texture and a response to touch. Each one runs live on the GPU. Move over them, tap them, turn the dials, and open the code underneath.</p>
-      <div class="bar"><button class="chip" type="button" id="still" aria-pressed="false">Reduce motion</button></div>
+      <div class="body">
+        <h1 class="h3">Shaders for interfaces</h1>
+        <p class="big muted">Six shaders, each placed in a real screen and driven by what the screen is doing. A background calms down while you type. A dialog's glass warns you. A skeleton turns into the rows it was holding a place for. Try the states, use the screens, or play each one through.</p>
+        <button class="chip" type="button" id="still" aria-pressed="false">Reduce motion</button>
+      </div>
     </header>
 
-    <section class="grid" id="grid" aria-label="Studies"></section>
+    <section class="grid4" id="studies" aria-label="Studies"></section>
 
-    <section class="what" aria-label="What they share">
+    <section class="what grid4" aria-label="What they share">
       <p class="label">What every study follows</p>
-      <ul class="principles">
-      <li><span class="label">Quiet by default</span><span class="muted">Slow, low contrast and dark, so the content on top stays the point. Colour comes from one accent.</span></li>
-      <li><span class="label">Answer people</span><span class="muted">The pointer, a tap or a press changes something. A surface that reacts feels like a material, not a video.</span></li>
-      <li><span class="label">Cheap to run</span><span class="muted">One pass each, no textures, and nothing draws while it is off screen.</span></li>
-      <li><span class="label">Calm when asked</span><span class="muted">With reduced motion on, nothing moves on its own. A tap still gets its answer.</span></li>
+      <ul>
+        <li><span class="label">A shader serves a moment</span><span class="muted">Each one exists for a state of the screen: waiting, typing, confirming, failing. It is never just wallpaper.</span></li>
+        <li><span class="label">The words stay readable</span><span class="muted">When text sits on top, the shader calms and darkens behind it. Content wins over effect.</span></li>
+        <li><span class="label">States ease, never cut</span><span class="muted">Every change blends over about 0.8 seconds with the same easing curve as the rest of the interface.</span></li>
+        <li><span class="label">Calm when asked</span><span class="muted">With reduced motion on, nothing moves on its own. A state change still shows, and a tap still gets its answer.</span></li>
       </ul>
     </section>
   </main>
 
+  <template id="ui-grain">
+    <form class="signin" data-form>
+      <p class="label" data-title>Welcome back</p>
+      <label class="sr" for="grain-email">Email</label>
+      <input id="grain-email" type="email" placeholder="you@example.com" autocomplete="off" data-input />
+      <button class="btn" type="submit" data-submit>Continue</button>
+    </form>
+  </template>
+  <template id="ui-glass">
+    <div class="dialog fade gone" role="dialog" aria-modal="false" aria-labelledby="glass-title" data-dialog>
+      <p class="label" id="glass-title">Delete this project?</p>
+      <p class="muted" data-msg>It can’t be undone.</p>
+      <div class="acts"><button class="btn danger" type="button" data-delete>Delete</button><button class="btn ghost" type="button" data-cancel>Cancel</button></div>
+    </div>
+    <button class="btn ghost opener fade" type="button" data-open>Delete project</button>
+  </template>
+  <template id="ui-spotlight">
+    <div class="centre"><button class="btn" type="button" data-button>Get started</button></div>
+  </template>
+  <template id="ui-shimmer">
+    <div class="list" aria-live="polite">
+      <div class="item fade gone"><span class="avatar label">D</span><span><span class="label">Design review</span><br /><span class="muted">One to two weeks</span></span></div>
+      <div class="item fade gone"><span class="avatar label">S</span><span><span class="label">Product sprint</span><br /><span class="muted">Two to four weeks</span></span></div>
+      <div class="item fade gone"><span class="avatar label">P</span><span><span class="label">AI prototype</span><br /><span class="muted">One to two weeks</span></span></div>
+    </div>
+    <p class="slow muted fade gone" data-slow>Still loading. This is taking longer than usual.</p>
+  </template>
+  <template id="ui-dither">
+    <div class="caption" aria-live="polite"><span class="label">Evening light</span><span class="muted" data-status>Loading</span></div>
+  </template>
+  <template id="ui-ripple">
+    <div class="pay" aria-live="polite">
+      <button class="btn" type="button" data-pay>Pay</button>
+      <p class="muted" data-note>Tap to pay</p>
+    </div>
+  </template>
+
   <script src="shaders.js"></script>
   <script>
   (() => {
-    const STUDIES = [
-      { id: 'grain', name: 'Grain gradient', use: 'For hero backgrounds and empty states.', dials: [['a', 'Wander', 0.55], ['b', 'Grain', 0.45], ['c', 'Contrast', 0.5]] },
-      { id: 'glass', name: 'Glass', use: 'For panels and sheets over rich content. Leans toward your pointer.', dials: [['a', 'Blur', 0.55], ['b', 'Bend', 0.5], ['c', 'Frost', 0.35]] },
-      { id: 'spotlight', name: 'Spotlight', use: 'For hover states on large surfaces. Drifts on its own until you arrive.', dials: [['a', 'Radius', 0.4], ['b', 'Brightness', 0.5], ['c', 'Grid', 0.3]] },
-      { id: 'shimmer', name: 'Shimmer', use: 'For loading skeletons, drawn on the GPU instead of animated in CSS.', dials: [['a', 'Speed', 0.4], ['b', 'Width', 0.4], ['c', 'Angle', 0.5]] },
-      { id: 'dither', name: 'Dither', use: 'For texture and personality, like print or an old screen.', dials: [['a', 'Pixel', 0.3], ['b', 'Tones', 0.4], ['c', 'Contrast', 0.5]] },
-      { id: 'ripple', name: 'Ripple', use: 'For touch feedback. Tap anywhere on it to send a ring.', dials: [['a', 'Wave', 0.5], ['b', 'Ring time', 0.5], ['c', 'Lines', 0.4]] },
-    ];
-    const grid = document.getElementById('grid');
-    const mounted = [];
+    const $ = (sel, el) => el.querySelector(sel);
     const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; };
+    const show = (n, on) => n.classList.toggle('gone', !on);
+
+    // Each study: its screen, its states (what the shader eases to, and what the interface shows),
+    // and a short script that plays the states through.
+    const STUDIES = [
+      {
+        id: 'grain', name: 'Grain gradient', use: 'Behind a sign-in screen. It settles and darkens while you type, so the words stay easy to read.',
+        dials: [['a', 'Wander', 0.55], ['b', 'Grain', 0.45], ['c', 'Contrast', 0.5]],
+        states: {
+          Resting: (s, ui) => { s.to({ k: 0, a: 0.55 }); $('[data-title]', ui).textContent = 'Welcome back'; show($('[data-input]', ui), true); $('[data-submit]', ui).textContent = 'Continue'; },
+          Typing: (s, ui) => { s.to({ k: 1 }); },
+          'Signed in': (s, ui) => { s.to({ k: 0, a: 0.85 }); $('[data-title]', ui).textContent = 'You’re in'; show($('[data-input]', ui), false); $('[data-submit]', ui).textContent = 'Open dashboard'; },
+        },
+        script: [['Resting', 2500], ['Typing', 3500], ['Signed in', 3000], ['Resting', 0]],
+        wire(ui, go) {
+          const input = $('[data-input]', ui);
+          input.addEventListener('focus', () => go('Typing'));
+          input.addEventListener('blur', () => { if (!input.value) go('Resting'); });
+          $('[data-form]', ui).addEventListener('submit', (e) => { e.preventDefault(); go(this.current === 'Signed in' ? 'Resting' : 'Signed in'); input.value = ''; });
+        },
+      },
+      {
+        id: 'glass', name: 'Glass', use: 'A dialog over a moving feed. The glass frosts in as it opens, and its edge turns to the accent when something fails.',
+        dials: [['a', 'Blur', 0.55], ['b', 'Bend', 0.5], ['c', 'Frost', 0.35]],
+        states: {
+          Closed: (s, ui) => { s.to({ k: 0, e: 0 }); show($('[data-dialog]', ui), false); show($('[data-open]', ui), true); },
+          Open: (s, ui) => { s.to({ k: 1, e: 0 }); show($('[data-dialog]', ui), true); show($('[data-open]', ui), false); $('[data-msg]', ui).textContent = 'It can’t be undone.'; $('[data-delete]', ui).textContent = 'Delete'; },
+          Error: (s, ui) => { s.to({ k: 1, e: 1 }); show($('[data-dialog]', ui), true); show($('[data-open]', ui), false); $('[data-msg]', ui).textContent = 'Couldn’t delete it. Check your connection and try again.'; $('[data-delete]', ui).textContent = 'Try again'; },
+        },
+        script: [['Closed', 2000], ['Open', 3000], ['Error', 3500], ['Closed', 0]],
+        wire(ui, go) {
+          $('[data-open]', ui).addEventListener('click', () => go('Open'));
+          $('[data-cancel]', ui).addEventListener('click', () => go('Closed'));
+          $('[data-delete]', ui).addEventListener('click', () => go(this.current === 'Error' ? 'Closed' : 'Error'));
+        },
+      },
+      {
+        id: 'spotlight', name: 'Spotlight', use: 'A call to action on a large surface. The light drifts until you arrive, finds the button, and gathers when you press.',
+        dials: [['a', 'Radius', 0.4], ['b', 'Brightness', 0.5], ['c', 'Grid', 0.3]],
+        states: {
+          Resting: (s) => { s.point(null); s.to({ k: 0 }); },
+          Hover: (s) => { s.point([0.5, 0.5]); s.to({ k: 0 }); },
+          Pressed: (s) => { s.point([0.5, 0.5]); s.to({ k: 1 }); },
+        },
+        script: [['Resting', 3000], ['Hover', 2000], ['Pressed', 1500], ['Hover', 1500], ['Resting', 0]],
+        wire(ui, go) {
+          const b = $('[data-button]', ui);
+          b.addEventListener('pointerenter', () => go('Hover'));
+          b.addEventListener('pointerleave', () => go('Resting'));
+          b.addEventListener('pointerdown', () => go('Pressed'));
+          b.addEventListener('pointerup', () => go('Hover'));
+          b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') go('Pressed'); });
+          b.addEventListener('keyup', () => go('Hover'));
+        },
+      },
+      {
+        id: 'shimmer', name: 'Shimmer', use: 'A loading list. When loading runs long, the shimmer slows and says so. When the rows arrive, they land exactly where the skeleton was.',
+        dials: [['a', 'Speed', 0.4], ['b', 'Width', 0.4], ['c', 'Angle', 0.5]],
+        states: {
+          Loading: (s, ui) => { s.to({ k: 0, e: 0 }); ui.querySelectorAll('.item').forEach((n) => show(n, false)); show($('[data-slow]', ui), false); },
+          Slow: (s, ui) => { s.to({ k: 0, e: 1 }); ui.querySelectorAll('.item').forEach((n) => show(n, false)); show($('[data-slow]', ui), true); },
+          Loaded: (s, ui) => { s.to({ k: 1, e: 0 }); ui.querySelectorAll('.item').forEach((n) => show(n, true)); show($('[data-slow]', ui), false); },
+        },
+        script: [['Loading', 3000], ['Slow', 3500], ['Loaded', 3500], ['Loading', 0]],
+      },
+      {
+        id: 'dither', name: 'Dither', use: 'A photo that loads progressively. Coarse dithered blocks hold the shape at once, get finer, then resolve into the real tones.',
+        dials: [['a', 'Blocks', 0.5], ['b', 'Tones', 0.2], ['c', 'Contrast', 0.5]],
+        states: {
+          Placeholder: (s, ui) => { s.to({ k: 0 }); $('[data-status]', ui).textContent = 'Loading'; },
+          Loading: (s, ui) => { s.to({ k: 0.55 }); $('[data-status]', ui).textContent = 'Loading'; },
+          Loaded: (s, ui) => { s.to({ k: 1 }); $('[data-status]', ui).textContent = 'Loaded'; },
+        },
+        script: [['Placeholder', 2000], ['Loading', 2500], ['Loaded', 3500], ['Placeholder', 0]],
+      },
+      {
+        id: 'ripple', name: 'Ripple', use: 'A pay button’s surface. A tap answers at once; success rings calm, and a decline rings twice in the accent.',
+        dials: [['a', 'Wave', 0.5], ['b', 'Ring time', 0.5], ['c', 'Lines', 0.4]],
+        states: {
+          Tap: (s, ui) => { s.to({ k: 0, e: 0 }); s.tap(0.5, 0.52); $('[data-pay]', ui).textContent = 'Pay'; $('[data-note]', ui).textContent = 'Tap to pay'; },
+          Success: (s, ui) => { s.to({ k: 1, e: 0 }); s.tap(0.5, 0.52); $('[data-pay]', ui).textContent = 'Paid'; $('[data-note]', ui).textContent = 'Payment complete'; },
+          Declined: (s, ui) => { s.to({ k: 0, e: 1 }); s.tap(0.5, 0.52); $('[data-pay]', ui).textContent = 'Try again'; $('[data-note]', ui).textContent = 'Card declined. Try another card.'; },
+        },
+        script: [['Tap', 2500], ['Success', 3000], ['Declined', 3000], ['Tap', 0]],
+        wire(ui, go) {
+          let n = 0;
+          $('[data-pay]', ui).addEventListener('click', () => go(['Success', 'Declined', 'Tap'][n++ % 3]));
+        },
+      },
+    ];
+
+    const host = document.getElementById('studies');
+    const all = [];
 
     for (const s of STUDIES) {
       const card = el('article', 'study');
+      const screen = el('div', 'screen');
       const canvas = el('canvas');
-      canvas.setAttribute('role', 'img');
-      canvas.setAttribute('aria-label', `${s.name} shader`);
+      canvas.setAttribute('aria-hidden', 'true');
+      screen.append(canvas);
+      const ui = el('div', 'ui');
+      ui.append(document.getElementById(`ui-${s.id}`).content.cloneNode(true));
+      screen.append(ui);
+      const shader = Shaders.mount(canvas, s.id, Object.fromEntries(s.dials.map(([k, , v]) => [k, v])));
+      all.push(shader);
+
       const head = el('div', 'head');
       head.append(el('h2', 'label', s.name), el('p', 'muted', s.use));
+
+      const row = el('div', 'row');
+      const chips = el('div', 'chips');
+      chips.setAttribute('role', 'group');
+      chips.setAttribute('aria-label', `${s.name} state`);
+      const play = el('button', 'chip', 'Play');
+      play.type = 'button';
+      play.setAttribute('aria-pressed', 'false');
+      row.append(chips, play);
+
+      let timer = 0;
+      const stop = () => { clearTimeout(timer); timer = 0; play.setAttribute('aria-pressed', 'false'); };
+      const go = (name) => {
+        s.current = name;
+        s.states[name](shader, ui);
+        chips.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.textContent === name)));
+      };
+      for (const name of Object.keys(s.states)) {
+        const b = el('button', 'chip', name);
+        b.type = 'button';
+        b.addEventListener('click', () => { stop(); go(name); });
+        chips.append(b);
+      }
+      play.addEventListener('click', () => {
+        if (timer) return stop();
+        play.setAttribute('aria-pressed', 'true');
+        let i = 0;
+        const step = () => {
+          const [name, ms] = s.script[i++];
+          go(name);
+          timer = i < s.script.length ? setTimeout(step, ms) : (stop(), 0);
+        };
+        step();
+      });
+      if (s.wire) s.wire(ui, (name) => { stop(); go(name); });
+
+      const more = el('details', 'more');
+      const sum = el('summary', null, 'Dials and code');
       const dials = el('div', 'dials');
-      const init = Object.fromEntries(s.dials.map(([k, , v]) => [k, v]));
-      const shader = Shaders.mount(canvas, s.id, init);
       for (const [k, label, v] of s.dials) {
         const id = `${s.id}-${k}`;
         const wrap = el('label', 'dial');
@@ -103,15 +323,15 @@
         wrap.append(el('span', 'muted', label), input);
         dials.append(wrap);
       }
-      const code = el('details', 'code');
-      code.append(el('summary', null, 'Shader code'), el('pre', null, Shaders.SOURCES[s.id].trim()));
-      card.append(canvas, head, dials, code);
-      grid.append(card);
-      mounted.push(shader);
+      more.append(sum, dials, el('pre', 'code', Shaders.SOURCES[s.id].trim()));
+
+      card.append(screen, head, row, more);
+      host.append(card);
+      go(Object.keys(s.states)[0]);
     }
 
     const btn = document.getElementById('still');
-    const setStill = (on) => { mounted.forEach((m) => m.still(on)); btn.setAttribute('aria-pressed', String(on)); };
+    const setStill = (on) => { all.forEach((m) => m.still(on)); btn.setAttribute('aria-pressed', String(on)); };
     btn.addEventListener('click', () => setStill(btn.getAttribute('aria-pressed') !== 'true'));
     setStill(matchMedia('(prefers-reduced-motion: reduce)').matches);
   })();
