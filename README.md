@@ -7,6 +7,7 @@ Each folder is one experiment you can run on its own. The write-ups live at [arn
 | Experiment | What it is |
 | --- | --- |
 | [Ask me about my work](ask-me-about-my-work) | A voice prototype: ask a portfolio a question out loud and hear the answer, powered by Claude. |
+| [Voice orbs](voice-orbs) | Eight visual directions for a voice assistant's presence, all reacting to the same conversation moments. |
 
 ## Licence
 
