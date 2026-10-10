@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ask me about my work</title>
+  <meta name="description" content="A voice prototype: ask about my work and hear the answer." />
+  <style>
+  :root {
+    --bg: #fff; --surface: #e6e6e6; --ink: rgb(0 0 0 / 0.9); --muted: rgb(0 0 0 / 0.6); --accent: #f1441d;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.5 ui-sans-serif, system-ui, sans-serif; padding: 0 16px 64px; }
+  .ask { margin-inline: auto; }
+  .muted { color: var(--muted); }
+  .label { font-weight: 400; }
+  .h3 { font-size: clamp(32px, 6vw, 48px); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; }
+  .big { font-size: 24px; }
+  .ask { display: grid; justify-items: center; gap: 32px; padding-block: 64px 0; max-width: 720px; text-align: center; }
+  .intro { display: grid; gap: 12px; }
+
+  .orb { position: relative; width: 200px; height: 200px; border: 0; padding: 0; background: none; cursor: pointer; border-radius: 50%; }
+  .orb:disabled { cursor: progress; }
+  .core, .ring { position: absolute; inset: 0; border-radius: 50%; }
+  .core { background: radial-gradient(circle at 35% 30%, #ff9a7a, var(--accent) 55%, #b32a0c); transition: transform 0.5s var(--ease), filter 0.5s; }
+  .ring { border: 2px solid var(--accent); opacity: 0; }
+
+  .orb[data-state='idle'] .core { transform: scale(0.82); }
+  .orb[data-state='idle']:hover .core { transform: scale(0.88); }
+  .orb[data-state='listening'] .core { transform: scale(0.95); animation: breathe 1.4s ease-in-out infinite; }
+  .orb[data-state='listening'] .ring { animation: ripple 1.4s ease-out infinite; }
+  .orb[data-state='thinking'] .core { transform: scale(0.7); filter: saturate(0.6); animation: think 1.2s linear infinite; background: conic-gradient(from 0deg, var(--accent), #ffb199, var(--accent)); }
+  .orb[data-state='speaking'] .core { animation: talk 0.5s ease-in-out infinite alternate; }
+  .orb[data-state='error'] .core { transform: scale(0.75); filter: grayscale(0.8); }
+
+  @keyframes breathe { 50% { transform: scale(1); } }
+  @keyframes ripple { from { transform: scale(0.9); opacity: 0.8; } to { transform: scale(1.35); opacity: 0; } }
+  @keyframes think { to { transform: scale(0.7) rotate(360deg); } }
+  @keyframes talk { from { transform: scale(0.84); } to { transform: scale(0.96); } }
+  @media (prefers-reduced-motion: reduce) {
+    .orb .core, .orb .ring { animation: none !important; }
+  }
+
+  .status { min-height: 1.4em; max-width: 34ch; }
+  .log { list-style: none; padding: 0; display: grid; gap: 12px; width: 100%; text-align: left; }
+  /* Added by script, so these need :global to escape Astro's scoping. */
+  .log li { padding: 12px 16px; border-radius: 12px; max-width: 85%; }
+  .log .user { justify-self: end; background: var(--surface); }
+  .log .assistant { justify-self: start; border: 1px solid var(--surface); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .chip, .type button { font: inherit; color: var(--ink); background: none; border: 1px solid var(--surface); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+  .chip:hover, .type button:hover { border-color: var(--accent); color: var(--accent); }
+
+  .type { display: flex; gap: 8px; width: 100%; }
+  .type input { flex: 1; min-width: 0; font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--surface); border-radius: 999px; padding: 10px 16px; }
+  .type input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .how { text-align: left; width: 100%; }
+  .how summary { cursor: pointer; }
+  .how p { margin-top: 8px; }
+
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <main class="ask" data-ask>
+    <div class="intro">
+      <p class="label muted">Voice prototype</p>
+      <h1 class="h3">Ask me about my work</h1>
+      <p class="muted">Tap the circle and ask a question out loud. It answers from my portfolio, using Claude.</p>
+    </div>
+
+    <button class="orb" type="button" data-orb data-state="idle" aria-describedby="ask-status">
+      <span class="core" aria-hidden="true"></span>
+      <span class="ring" aria-hidden="true"></span>
+      <span class="sr" data-orb-label>Start talking</span>
+    </button>
+    <p id="ask-status" class="status big" aria-live="polite" data-status>Tap to talk</p>
+
+    <ol class="log" data-log aria-live="polite"></ol>
+
+    <!-- Starter questions. Change them to fit your own work. -->
+    <div class="chips" data-chips>
+      <button type="button" class="chip" data-q="What did Gustav do for Spotify in cars?">What did Gustav do for Spotify in cars?</button>
+      <button type="button" class="chip" data-q="How does he use Claude in his work?">How does he use Claude in his work?</button>
+      <button type="button" class="chip" data-q="Is he available, and how can we work together?">Is he available, and how can we work together?</button>
+    </div>
+
+    <form class="type" data-form>
+      <label class="sr" for="ask-input">Or type a question</label>
+      <input id="ask-input" name="q" type="text" maxlength="500" autocomplete="off" placeholder="Or type a question" />
+      <button type="submit">Ask</button>
+    </form>
+
+    <details class="how muted">
+      <summary>How it works</summary>
+      <p>Your browser turns speech into text, the question goes to Claude with the facts in knowledge.md as context, and your browser reads the answer aloud. Nothing is stored.</p>
+    </details>
+  </main>
+
+  <script>
+
+  const root = document.querySelector('[data-ask]');
+  const orb = root.querySelector('[data-orb]');
+  const orbLabel = root.querySelector('[data-orb-label]');
+  const status = root.querySelector('[data-status]');
+  const log = root.querySelector('[data-log]');
+  const form = root.querySelector('[data-form]');
+  const input = form.querySelector('input');
+
+  const history = [];
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const canSpeak = 'speechSynthesis' in window;
+  let recognition = null;
+  let state = 'idle';
+
+  const copy = {
+    idle: ['Tap to talk', 'Start talking'],
+    listening: ['Listening…', 'Stop listening'],
+    thinking: ['Thinking…', 'Thinking'],
+    speaking: ['Speaking. Tap to interrupt', 'Stop speaking'],
+    error: ['Something went wrong. Tap to try again', 'Try again'],
+  };
+
+  function set(next, message) {
+    state = next;
+    orb.dataset.state = next;
+    orb.disabled = next === 'thinking';
+    status.textContent = message ?? copy[next][0];
+    orbLabel.textContent = copy[next][1];
+  }
+
+  function add(role, text) {
+    const li = document.createElement('li');
+    li.className = role;
+    li.textContent = text;
+    log.append(li);
+    li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    return li;
+  }
+
+  // Prefer a natural-sounding English voice when the browser offers one.
+  function voice() {
+    const voices = speechSynthesis.getVoices().filter((v) => v.lang.startsWith('en'));
+    const liked = ['Samantha', 'Daniel', 'Google UK English Male', 'Google US English', 'Microsoft Aria', 'Microsoft Guy'];
+    return liked.map((n) => voices.find((v) => v.name.includes(n))).find(Boolean) ?? voices[0];
+  }
+
+  function speak(text) {
+    if (!canSpeak) return set('idle');
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = voice();
+    if (v) u.voice = v;
+    u.rate = 1.03;
+    u.onend = () => state === 'speaking' && set('idle');
+    u.onerror = () => set('idle');
+    set('speaking');
+    speechSynthesis.speak(u);
+  }
+
+  async function ask(question) {
+    const q = question.trim().slice(0, 500);
+    if (!q) return set('idle');
+    add('user', q);
+    history.push({ role: 'user', content: q });
+    set('thinking');
+    try {
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        history.pop();
+        const why = data.error === 'offline' ? 'The prototype is offline right now. Try again later, or email me.'
+          : data.error === 'busy' ? 'Lots of questions right now. Wait a moment and try again.'
+          : 'Something went wrong. Try again.';
+        return set('error', why);
+      }
+      history.push({ role: 'assistant', content: data.answer });
+      add('assistant', data.answer);
+      speak(data.answer);
+    } catch {
+      history.pop();
+      set('error', 'Couldn’t reach the server. Check your connection and try again.');
+    }
+  }
+
+  function listen() {
+    if (!Recognition) {
+      input.focus();
+      return set('idle', 'Voice input isn’t available in this browser. Type your question below.');
+    }
+    recognition = new Recognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    let finalText = '';
+    recognition.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const r = e.results[i];
+        if (r.isFinal) finalText += r[0].transcript;
+        else interim += r[0].transcript;
+      }
+      status.textContent = (finalText + interim).trim() || copy.listening[0];
+    };
+    recognition.onerror = (e) => {
+      recognition = null;
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        set('idle', 'Microphone access is blocked. Allow it in your browser, or type below.');
+      } else if (e.error === 'no-speech') {
+        set('idle', 'I didn’t hear anything. Tap to try again.');
+      } else {
+        set('error');
+      }
+    };
+    recognition.onend = () => {
+      const heard = finalText.trim();
+      recognition = null;
+      if (state !== 'listening') return;
+      if (heard) ask(heard);
+      else set('idle', 'I didn’t hear anything. Tap to try again.');
+    };
+    set('listening');
+    recognition.start();
+  }
+
+  orb.addEventListener('click', () => {
+    if (state === 'listening') return recognition?.stop();
+    if (state === 'speaking') {
+      speechSynthesis.cancel();
+      return listen(); // barge in: stop talking and start listening
+    }
+    listen();
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (state === 'thinking') return;
+    if (canSpeak) speechSynthesis.cancel();
+    const q = input.value;
+    input.value = '';
+    ask(q);
+  });
+
+  root.querySelectorAll('[data-q]').forEach((b) =>
+    b.addEventListener('click', () => state !== 'thinking' && ask(b.dataset.q)),
+  );
+
+  if (canSpeak) speechSynthesis.getVoices(); // warm up the voice list
+  if (!Recognition) status.textContent = 'Type a question below, or tap a suggestion.';
+  </script>
+</body>
+</html>

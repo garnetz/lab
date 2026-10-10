@@ -1,0 +1,12 @@
+// A Cloudflare Worker that serves the page in public/ and answers questions at /api/ask.
+// Set your key once with `npx wrangler secret put ANTHROPIC_API_KEY` (or .dev.vars locally).
+{
+  "name": "ask-me-about-my-work",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-09-01",
+  // knowledge.md is bundled as plain text and becomes the voice's facts.
+  "rules": [{ "type": "Text", "globs": ["**/*.md"], "fallthrough": true }],
+  // A few questions a minute per visitor keeps the API bill small.
+  "ratelimits": [{ "name": "ASK_LIMITER", "namespace_id": "1001", "simple": { "limit": 10, "period": 60 } }],
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*"] }
+}
