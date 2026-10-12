@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Turnaround time</title>
+  <meta name="description" content="From your pace so far, the climb ahead and the daylight left: when to turn back, and how sure that is." />
+  <style>
+  /* Grid, type and spacing follow design-rules/SKILL.md. */
+  :root {
+    color-scheme: dark;
+    --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px;
+  }
+  @media (max-width: 1199.98px) { :root { --margin: 24px; --gap: 24px; --h3: 40px; --space-l: 96px; --space-m: 64px; } }
+  @media (max-width: 809.98px) { :root { --margin: 16px; --gap: 16px; --h3: 32px; --space-l: 64px; --space-m: 48px; --space-s: 24px; } }
+  * { box-sizing: border-box; margin: 0; }
+  [hidden] { display: none !important; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.4 ui-sans-serif, system-ui, sans-serif; padding-block: 0 var(--space-l); }
+  .page { max-width: 1440px; margin-inline: auto; padding-inline: var(--margin); padding-block: var(--space-m) 0; display: grid; gap: var(--space-l); }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-s) var(--gap); }
+  .muted { color: var(--muted); }
+  .label { font-size: 16px; line-height: 1.2; font-weight: 400; }
+  .h3 { font-size: var(--h3); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  .big { font-size: 24px; font-weight: 200; line-height: 1.4; }
+  p { text-wrap: pretty; }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: rgb(255 255 255 / 0.3); }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .intro { align-items: baseline; }
+  .back { grid-column: 1; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
+  .back:hover { color: var(--ink); }
+  .body { grid-column: 2 / span 2; display: grid; gap: 16px; justify-items: start; }
+  @media (max-width: 1199.98px) { .body { grid-column: 2 / -1; } }
+  @media (max-width: 809.98px) { .back, .body { grid-column: 1 / -1; } }
+  .chip { background: none; border: 1px solid var(--surface); border-radius: 4px; min-height: 44px; padding: 8px 16px; cursor: pointer; display: inline-flex; align-items: center; transition: border-color 0.2s var(--ease); }
+  .chip:hover { border-color: var(--muted); }
+
+  /* Inputs in column 1, the answer in columns 2 to 4. */
+  .inputs { grid-column: 1; display: grid; gap: var(--space-s); align-content: start; }
+  .answer { grid-column: 2 / -1; display: grid; gap: var(--space-s); align-content: start; }
+  @media (max-width: 1199.98px) { .inputs { grid-column: 1 / span 2; } .answer { grid-column: 3 / -1; } }
+  @media (max-width: 809.98px) { .inputs, .answer { grid-column: 1 / -1; } .answer { order: -1; } }
+  fieldset { border: 0; padding: 0; display: grid; gap: 8px; }
+  legend { padding: 0; margin-bottom: 8px; }
+  .field { display: grid; grid-template-columns: minmax(0, 1fr) 8.5rem; gap: 8px; align-items: center; }
+  .field input { width: 100%; min-height: 44px; padding: 8px 12px; background: none; border: 1px solid var(--surface); border-radius: 4px; font-variant-numeric: tabular-nums; }
+  .field input:hover { border-color: var(--muted); }
+  .unit { color: var(--muted); }
+
+  .headline { font-size: var(--h3); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .headline em { font-style: normal; color: var(--accent); }
+  .why { display: grid; gap: 8px; max-width: 46rem; }
+
+  .timeline { position: relative; height: 176px; }
+  .timeline .track { position: absolute; left: 0; right: 0; top: 0; bottom: 32px; }
+  .row { position: absolute; left: 0; right: 0; height: 32px; }
+  .row .name { position: absolute; left: 0; top: -22px; z-index: 1; padding-right: 8px; background: var(--bg); color: var(--muted); font-size: 14px; white-space: nowrap; }
+  .band { position: absolute; top: 8px; height: 16px; border-radius: 4px; background: rgb(255 255 255 / 0.18); }
+  .band .mid { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); }
+  .dark { position: absolute; top: 0; bottom: 32px; right: 0; background: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.06) 0 2px, transparent 2px 8px); border-left: 1px solid rgb(255 255 255 / 0.4); }
+  .safe { position: absolute; top: 0; bottom: 32px; border-left: 1px dashed rgb(255 255 255 / 0.3); }
+  .turn { position: absolute; top: 0; bottom: 32px; border-left: 2px solid var(--accent); }
+  .tick { position: absolute; bottom: 0; transform: translateX(-50%); font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tick.accent { color: var(--accent); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 14px; color: var(--muted); }
+  .note { color: var(--muted); max-width: 46rem; }
+
+  .what > .label { grid-column: 1 / -1; }
+  .what ul { display: contents; padding: 0; }
+  .what li { list-style: none; display: grid; gap: 8px; align-content: start; }
+  @media (max-width: 1199.98px) { .what li { grid-column: span 2; } }
+  @media (max-width: 809.98px) { .what li { grid-column: 1 / -1; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro grid4">
+      <a class="label muted back" href="https://portfolio.gustav-arnetz.workers.dev/lab">← Lab</a>
+      <div class="body">
+        <h1 class="h3">Turnaround time</h1>
+        <p class="big muted">Halfway up a mountain, the real question is when to turn back. This takes your pace so far, the climb ahead and the daylight left, and gives a time, along with how sure it is. Planning around uncertainty is the same design problem as showing what an AI is unsure of.</p>
+      </div>
+    </header>
+
+    <section class="grid4" aria-label="Turnaround time">
+      <form class="inputs" id="form" autocomplete="off">
+        <fieldset>
+          <legend class="label">So far</legend>
+          <label class="field"><span class="muted">Time now</span><input type="time" id="now" value="12:30" /></label>
+          <label class="field"><span class="muted">Walked, km</span><input type="number" id="doneKm" value="7.5" min="0.1" step="0.1" inputmode="decimal" /></label>
+          <label class="field"><span class="muted">Climbed, m</span><input type="number" id="doneUp" value="650" min="0" step="10" inputmode="numeric" /></label>
+          <label class="field"><span class="muted">Time it took, h:mm</span><input type="text" id="doneTime" value="3:05" inputmode="numeric" pattern="\d{1,2}:\d{2}" /></label>
+        </fieldset>
+        <fieldset>
+          <legend class="label">To the top</legend>
+          <label class="field"><span class="muted">Distance, km</span><input type="number" id="aheadKm" value="3.2" min="0" step="0.1" inputmode="decimal" /></label>
+          <label class="field"><span class="muted">Climb, m</span><input type="number" id="aheadUp" value="720" min="0" step="10" inputmode="numeric" /></label>
+        </fieldset>
+        <fieldset>
+          <legend class="label">Back down, the same way</legend>
+          <label class="field"><span class="muted">Distance, km</span><input type="number" id="backKm" value="10.7" min="0" step="0.1" inputmode="decimal" /></label>
+          <label class="field"><span class="muted">Descent, m</span><input type="number" id="backDown" value="1370" min="0" step="10" inputmode="numeric" /></label>
+        </fieldset>
+        <fieldset>
+          <legend class="label">Daylight</legend>
+          <label class="field"><span class="muted">Sunset</span><input type="time" id="dark" value="18:10" /></label>
+          <label class="field"><span class="muted">Margin, minutes</span><input type="number" id="margin" value="30" min="0" step="5" inputmode="numeric" /></label>
+          <label class="field"><span class="muted">How sure, %</span><input type="number" id="conf" value="90" min="50" max="99" step="5" inputmode="numeric" /></label>
+          <button class="chip" type="button" id="here">Use sunset where I am</button>
+          <p class="muted" id="here-note" aria-live="polite"></p>
+        </fieldset>
+      </form>
+
+      <div class="answer" aria-live="polite">
+        <p class="headline" id="headline"></p>
+        <div class="why">
+          <p class="big" id="detail"></p>
+          <p class="muted" id="pace"></p>
+        </div>
+        <div>
+          <div class="timeline" id="timeline" aria-hidden="true"></div>
+          <div class="legend"><span>Bars: 8 in 10 runs land inside, the line is the most likely time</span><span>Hatched: after sunset</span></div>
+        </div>
+        <p class="note">A planning aid, not a promise. Weather, the ground underfoot and how you feel matter more than any number. If in doubt, turn back earlier.</p>
+      </div>
+    </section>
+
+    <section class="what grid4" aria-label="How it works">
+      <p class="label">How it works</p>
+      <ul>
+        <li><span class="label">Your pace, not an average</span><span class="muted">Effort is counted with Naismith's rule: an hour per 5 km, plus 10 minutes per 100 m up, plus 10 minutes per 300 m down. How long your effort so far took becomes your pace for the rest.</span></li>
+        <li><span class="label">2 000 versions of the afternoon</span><span class="muted">Nobody keeps a steady pace. The rest of the day is played out 2 000 times with a pace that wanders, tiredness that builds and descents that vary more than climbs. The more you've walked, the less your pace wanders.</span></li>
+        <li><span class="label">A time, with its doubt</span><span class="muted">The turnaround is the latest moment when turning back still gets you down before sunset, minus your margin, in 9 runs out of 10. You can change both the margin and how sure it has to be.</span></li>
+        <li><span class="label">Said plainly</span><span class="muted">One time leads, in large type, because that's the decision. Ranges and chances come after, in words before numbers, the way you'd want an AI to admit what it doesn't know.</span></li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="turnaround.js"></script>
+  <script>
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const toMin = (v) => { const [h, m] = String(v || '0:0').split(':').map(Number); return h * 60 + m; };
+    const clock = (m) => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return `${String(Math.floor(x / 60)).padStart(2, '0')}:${String(x % 60).padStart(2, '0')}`; };
+    const dur = (m) => { m = Math.round(m); const h = Math.floor(m / 60); return h ? `${h} h ${m % 60} min` : `${m} min`; };
+    const inWords = (share) => { const n = Math.round(share * 10); return n >= 10 ? 'almost certainly' : n <= 0 ? 'very unlikely' : `${n} in 10`; };
+
+    function read() {
+      const num = (id) => Math.max(0, Number($(id).value) || 0);
+      return {
+        now: toMin($('now').value), doneKm: num('doneKm'), doneUp: num('doneUp'), doneMin: Math.max(5, toMin($('doneTime').value)),
+        aheadKm: num('aheadKm'), aheadUp: num('aheadUp'), backKm: num('backKm'), backDown: num('backDown'),
+        dark: toMin($('dark').value), margin: num('margin'), confidence: Math.min(0.99, Math.max(0.5, num('conf') / 100)),
+      };
+    }
+
+    function render() {
+      const i = read();
+      const r = Turnaround.plan(i);
+      const sure = Math.round(i.confidence * 100);
+      let head, detail;
+      if (r.canSummit) {
+        head = `You have time for the top.`;
+        detail = `You'll likely reach it around ${clock(r.top.mid)} and be down around ${clock(r.home.mid)}, before sunset with your margin to spare ${inWords(r.share)} times. If you're slower than that and not at the top by ${clock(r.top.hi)}, turn back.`;
+      } else if (r.turn != null && r.turn > i.now + 1) {
+        head = `Turn back by <em>${clock(r.turn)}</em>.`;
+        detail = `That's in ${dur(r.turn - i.now)}. Going on to the top, you'd likely reach it around ${clock(r.top.mid)} (between ${clock(r.top.lo)} and ${clock(r.top.hi)}) and be down around ${clock(r.home.mid)}. You'd make it down before sunset, minus your margin, only ${inWords(r.share)} times.`;
+      } else {
+        head = `Turn back <em>now</em>.`;
+        detail = `Even starting down now, you'd likely be down around ${clock(r.nowBack.mid)}, and ${sure % 10 ? `${sure} times in 100` : `${sure / 10} times in 10`} by ${clock(r.nowBack.hi)}. ${r.nowBack.hi > i.dark ? 'That may be after sunset, so get your headlamp out before you need it.' : 'That leaves some light, but not enough for the top.'}`;
+      }
+      $('headline').innerHTML = head;
+      $('detail').textContent = detail;
+      $('pace').textContent = `Your pace so far: ${(r.minPerE).toFixed(1)} minutes per km on the flat, counting climbs. The rest of the day could be about ${Math.round(r.spread * 100)}% faster or slower than that.`;
+      drawTimeline(i, r);
+    }
+
+    function drawTimeline(i, r) {
+      const el = $('timeline');
+      const from = i.now, to = Math.max(i.dark + 60, r.home.hi + 20);
+      const x = (m) => `${Math.max(0, Math.min(100, ((m - from) / (to - from)) * 100))}%`;
+      const band = (top, name, b) => `<div class="row" style="top:${top}px"><span class="name">${name}</span><div class="band" style="left:${x(b.lo)};width:calc(${x(b.hi)} - ${x(b.lo)})"><span class="mid" style="left:${((b.mid - b.lo) / Math.max(1, b.hi - b.lo)) * 100}%"></span></div></div>`;
+      const ticks = [];
+      const pxPerMin = (el.clientWidth || 600) / (to - from);
+      const step = [60, 120, 180, 240].find((st) => st * pxPerMin >= 64) || 240;
+      const turnAt = r.turn != null && !r.canSummit ? r.turn : null;
+      for (let m = Math.ceil(from / step) * step; m <= to; m += step) if (turnAt == null || Math.abs(m - turnAt) * pxPerMin > 72) ticks.push(`<span class="tick" style="left:${x(m)}">${clock(m)}</span>`);
+      el.innerHTML = `
+        <div class="dark" style="left:${x(i.dark)}"></div>
+        <div class="safe" style="left:${x(i.dark - i.margin)}"></div>
+        ${band(40, 'At the top', r.top)}
+        ${band(96, 'Down again, if you go to the top', r.home)}
+        ${r.turn != null && !r.canSummit ? `<div class="turn" style="left:${x(r.turn)}"></div><span class="tick accent" style="left:${x(r.turn)}">Turn ${clock(r.turn)}</span>` : ''}
+        ${ticks.join('')}`;
+    }
+
+    $('form').addEventListener('input', render);
+    $('here').addEventListener('click', () => {
+      const note = $('here-note');
+      if (!navigator.geolocation) { note.textContent = 'This browser cannot share a location.'; return; }
+      note.textContent = 'Finding where you are…';
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const s = Turnaround.sunset(new Date(), pos.coords.latitude, pos.coords.longitude);
+        if (s.polar) { note.textContent = s.polar === 'day' ? 'The sun does not set here today.' : 'The sun does not rise here today.'; return; }
+        $('dark').value = clock(s.minutes);
+        note.textContent = 'Sunset today, worked out on this device. Your location is not sent anywhere.';
+        render();
+      }, () => { note.textContent = "Couldn't get your location. Type the sunset time instead."; }, { maximumAge: 600000, timeout: 10000 });
+    });
+    render();
+  })();
+  </script>
+</body>
+</html>
