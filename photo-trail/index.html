@@ -51,14 +51,14 @@
   .frame.drop { outline: 2px dashed var(--accent); outline-offset: -8px; }
   .card { position: absolute; left: 0; top: 0; width: clamp(140px, 26%, 280px); pointer-events: none; display: grid; gap: 4px; transition: opacity 0.4s var(--ease); }
   .card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; display: block; background: var(--surface); box-shadow: 0 8px 32px rgb(0 0 0 / 0.6); }
-  .card p { font-size: 14px; color: var(--ink); text-shadow: 0 1px 4px #000; font-variant-numeric: tabular-nums; }
+  .card p { font-size: 16px; color: var(--ink); text-shadow: 0 1px 4px #000; font-variant-numeric: tabular-nums; }
   .empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--muted); pointer-events: none; }
 
   .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
   .controls input[type=range] { flex: 1; min-width: 160px; accent-color: var(--accent); min-height: 44px; }
   .now { font-variant-numeric: tabular-nums; min-width: 14ch; }
   .strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin; }
-  .strip button { flex: none; width: 96px; display: grid; gap: 4px; padding: 0; background: none; border: 0; cursor: pointer; text-align: left; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .strip button { flex: none; width: 96px; display: grid; gap: 4px; padding: 0; background: none; border: 0; cursor: pointer; text-align: left; color: var(--muted); font-size: 16px; font-variant-numeric: tabular-nums; }
   .strip img { width: 96px; height: 72px; object-fit: cover; border-radius: 4px; display: block; border: 2px solid transparent; }
   .strip button[aria-current='true'] { color: var(--ink); }
   .strip button[aria-current='true'] img { border-color: var(--accent); }

@@ -57,15 +57,15 @@
   .timeline { position: relative; height: 176px; }
   .timeline .track { position: absolute; left: 0; right: 0; top: 0; bottom: 32px; }
   .row { position: absolute; left: 0; right: 0; height: 32px; }
-  .row .name { position: absolute; left: 0; top: -22px; z-index: 1; padding-right: 8px; background: var(--bg); color: var(--muted); font-size: 14px; white-space: nowrap; }
+  .row .name { position: absolute; left: 0; top: -24px; z-index: 1; padding-right: 8px; background: var(--bg); color: var(--muted); font-size: 16px; white-space: nowrap; }
   .band { position: absolute; top: 8px; height: 16px; border-radius: 4px; background: rgb(255 255 255 / 0.18); }
   .band .mid { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); }
   .dark { position: absolute; top: 0; bottom: 32px; right: 0; background: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.06) 0 2px, transparent 2px 8px); border-left: 1px solid rgb(255 255 255 / 0.4); }
   .safe { position: absolute; top: 0; bottom: 32px; border-left: 1px dashed rgb(255 255 255 / 0.3); }
   .turn { position: absolute; top: 0; bottom: 32px; border-left: 2px solid var(--accent); }
-  .tick { position: absolute; bottom: 0; transform: translateX(-50%); font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tick { position: absolute; bottom: 0; transform: translateX(-50%); font-size: 16px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .tick.accent { color: var(--accent); }
-  .legend { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 14px; color: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 16px; color: var(--muted); }
   .note { color: var(--muted); max-width: 46rem; }
 
   .what > .label { grid-column: 1 / -1; }
@@ -187,7 +187,8 @@
       const pxPerMin = (el.clientWidth || 600) / (to - from);
       const step = [60, 120, 180, 240].find((st) => st * pxPerMin >= 64) || 240;
       const turnAt = r.turn != null && !r.canSummit ? r.turn : null;
-      for (let m = Math.ceil(from / step) * step; m <= to; m += step) if (turnAt == null || Math.abs(m - turnAt) * pxPerMin > 72) ticks.push(`<span class="tick" style="left:${x(m)}">${clock(m)}</span>`);
+      const edge = 24 / pxPerMin; // half a label, so none spills past the edges
+      for (let m = Math.ceil((from + edge) / step) * step; m <= to - edge; m += step) if (turnAt == null || Math.abs(m - turnAt) * pxPerMin > 72) ticks.push(`<span class="tick" style="left:${x(m)}">${clock(m)}</span>`);
       el.innerHTML = `
         <div class="dark" style="left:${x(i.dark)}"></div>
         <div class="safe" style="left:${x(i.dark - i.margin)}"></div>
