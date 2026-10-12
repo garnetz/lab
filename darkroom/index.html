@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Darkroom</title>
+  <meta name="description" content="Six shaders that work on real photographs, the way a darkroom or a lens would: relight, halation, tilt-shift, film, sun rays and golden hour." />
+  <style>
+  /* Grid, type and spacing follow design-rules/SKILL.md. */
+  :root {
+    color-scheme: dark;
+    --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px;
+  }
+  @media (max-width: 1199.98px) { :root { --margin: 24px; --gap: 24px; --h3: 40px; --space-l: 96px; --space-m: 64px; } }
+  @media (max-width: 809.98px) { :root { --margin: 16px; --gap: 16px; --h3: 32px; --space-l: 64px; --space-m: 48px; --space-s: 24px; } }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.4 ui-sans-serif, system-ui, sans-serif; padding-block: 0 var(--space-l); }
+  .page { max-width: 1440px; margin-inline: auto; padding-inline: var(--margin); padding-block: var(--space-m) 0; display: grid; gap: var(--space-l); }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-m) var(--gap); }
+  .muted { color: var(--muted); }
+  .label { font-size: 16px; line-height: 1.2; font-weight: 400; }
+  .h3 { font-size: var(--h3); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  .big { font-size: 24px; font-weight: 200; line-height: 1.4; }
+  p { text-wrap: pretty; }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: rgb(255 255 255 / 0.3); }
+  a:hover { text-decoration-color: currentColor; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .intro { align-items: baseline; row-gap: var(--space-s); }
+  .back { grid-column: 1; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
+  .back:hover { color: var(--ink); }
+  .intro .body { grid-column: 2 / span 2; display: grid; gap: 16px; justify-items: start; }
+  @media (max-width: 1199.98px) { .intro .body { grid-column: 2 / -1; } }
+  @media (max-width: 809.98px) { .back, .intro .body { grid-column: 1 / -1; } }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: none; border: 1px solid var(--surface); border-radius: 4px; min-height: 44px; padding: 8px 16px; cursor: pointer; display: inline-flex; align-items: center; transition: background 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease); }
+  .chip:hover { border-color: var(--muted); }
+  .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .chip[hidden] { display: none; }
+
+  .study { grid-column: span 2; display: grid; gap: 16px; align-content: start; min-width: 0; }
+  @media (max-width: 809.98px) { .study { grid-column: 1 / -1; } }
+  .frame { position: relative; aspect-ratio: 3 / 2; border-radius: 4px; overflow: hidden; background: var(--surface); touch-action: none; cursor: crosshair; }
+  .frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .frame canvas.no-gl { display: none; }
+  .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
+  .frame canvas.no-gl + img { opacity: 1; }
+  .head { display: grid; gap: 4px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+  .credit { color: var(--muted); }
+
+  .more summary { cursor: pointer; color: var(--muted); min-height: 44px; display: flex; align-items: center; }
+  .more summary:hover { color: var(--ink); }
+  .more[open] { display: grid; gap: 16px; }
+  .dials { display: grid; gap: 8px 24px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  @media (max-width: 520px) { .dials { grid-template-columns: 1fr; } }
+  .dial { display: grid; gap: 4px; }
+  .dial input { width: 100%; accent-color: var(--accent); }
+  .code { padding: 16px; border: 1px solid var(--surface); border-radius: 4px; overflow-x: auto; font: 200 16px/1.5 ui-monospace, 'SF Mono', Menlo, monospace; color: var(--muted); max-height: 420px; }
+
+  .what { row-gap: var(--space-s); }
+  .what > .label { grid-column: 1 / -1; }
+  .what ul { display: contents; padding: 0; }
+  .what li { list-style: none; display: grid; gap: 8px; align-content: start; }
+  @media (max-width: 1199.98px) { .what li { grid-column: span 2; } }
+  @media (max-width: 809.98px) { .what li { grid-column: 1 / -1; } }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro grid4">
+      <a class="label muted back" href="https://portfolio.gustav-arnetz.workers.dev/lab">← Lab</a>
+      <div class="body">
+        <h1 class="h3">Darkroom</h1>
+        <p class="big muted">Six shaders that work on real photographs, the way a lens, a film stock or a darkroom would. Move a light across a room, let neon bleed into the film, turn a coastline into a model, or move the sun. Each one runs live on the photo, and you can hold to see the original.</p>
+        <div class="chips">
+          <label class="chip" for="own">Use your own photo</label>
+          <input class="sr" type="file" accept="image/*" id="own" />
+          <button class="chip" type="button" id="reset" hidden>Back to the Unsplash photos</button>
+          <button class="chip" type="button" id="still" aria-pressed="false">Reduce motion</button>
+        </div>
+        <p class="muted" id="own-note">Your photo stays in your browser. Nothing is uploaded.</p>
+      </div>
+    </header>
+
+    <section class="grid4" id="studies" aria-label="Studies"></section>
+
+    <section class="what grid4" aria-label="How they work">
+      <p class="label">How they work</p>
+      <ul>
+        <li><span class="label">The photo is the input</span><span class="muted">Each shader reads the photo, not a made-up scene. What it does depends on what’s in the picture: where the light is, where the edges are.</span></li>
+        <li><span class="label">Borrowed from photography</span><span class="muted">Every effect has a real-world cause: a light you can move, light scattering in film, a tilted lens, a film stock, haze, the time of day.</span></li>
+        <li><span class="label">One pass, live</span><span class="muted">Each runs in a single pass on the graphics card, as you move, and stops drawing when it’s off screen.</span></li>
+        <li><span class="label">Credit where it’s due</span><span class="muted">Photos from Unsplash, used under the Unsplash licence and credited to their photographers. Try your own instead.</span></li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="darkroom.js"></script>
+  <script>
+  (() => {
+    const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; };
+    const UTM = '?utm_source=arnetz_lab&utm_medium=referral';
+    const photo = (id, w = 1800) => `https://images.unsplash.com/${id}?auto=format&fit=max&q=80&w=${w}`;
+
+    // Each study: a shader, the photo it was made for, and what your pointer does.
+    const STUDIES = [
+      {
+        id: 'relight', name: 'Relight', use: 'Move a light across the room. Where brightness changes, the shader guesses a surface, so the window frame and the floor catch the light.',
+        pointer: 'Your pointer is the light.',
+        dials: [['a', 'Strength', 0.6], ['b', 'Relief', 0.5], ['c', 'Warmth', 0.5]],
+        img: 'photo-1527377761-f99968ed8a7f', by: 'Brian Patrick Tagalog', user: 'briantagalog', page: 'the-sunlight-is-shining-through-the-window-onto-the-floor-zyJOGYGNp24',
+      },
+      {
+        id: 'halation', name: 'Halation', use: 'Bright lights bleed a red glow into the film around them, the way cinema stock does at night. Neon and wet streets are where it shows.',
+        pointer: 'Hold to compare with the original.',
+        dials: [['a', 'Threshold', 0.4], ['b', 'Spread', 0.5], ['c', 'Amount', 0.55]],
+        img: 'photo-1601042879364-f3947d3f9c16', by: 'Valentin Beauvais', user: 'valentinbvs', page: 'wet-street-at-night-in-tokyo-yVUQlyRlJSw',
+      },
+      {
+        id: 'tiltshift', name: 'Tilt-shift', use: 'One band stays sharp and the rest falls out of focus, so a real coastline reads like a model. A tilted lens does the same.',
+        pointer: 'Your pointer moves the sharp band.',
+        dials: [['a', 'Band', 0.35], ['b', 'Blur', 0.6], ['c', 'Colour', 0.5]],
+        img: 'photo-1555979864-7a8f9b4fddf8', by: 'Kiril Dobrev', user: 'kirildobrev', page: 'birds-eye-view-of-beach-line-v63UL8s28Ew',
+      },
+      {
+        id: 'film', name: 'Film', use: 'A film stock: cool shadows, warm highlights, lifted blacks and grain that lives in the mid tones, where it does on real film.',
+        pointer: 'Hold to compare with the original.',
+        dials: [['a', 'Grain', 0.5], ['b', 'Split tone', 0.55], ['c', 'Fade', 0.45]],
+        img: 'photo-1487621167305-5d248087c724', by: 'Paul Pastourmatzis', user: 'paulpastourmatzis', page: 'silhouette-of-trees-covered-by-fog-KT3WlrL_bsg',
+      },
+      {
+        id: 'rays', name: 'Sun rays', use: 'Light streams from the sun through the bright gaps between the trees. Move the sun and the rays follow.',
+        pointer: 'Your pointer is the sun.',
+        dials: [['a', 'Length', 0.6], ['b', 'Strength', 0.5], ['c', 'Warmth', 0.6]],
+        img: 'photo-1448375240586-882707db888b', by: 'Sebastian Unrau', user: 'sebastian_unrau', page: 'trees-on-forest-with-sun-rays-sp-p7uuT0tw',
+      },
+      {
+        id: 'golden', name: 'Golden hour', use: 'Re-time a photo from blue hour to golden hour. The light warms, the highlights glow and the air fills with haze.',
+        pointer: 'Move left to right to change the time.',
+        dials: [['a', 'Time of day', 0.8], ['b', 'Haze', 0.4], ['c', 'Glow', 0.6]],
+        img: 'photo-1684597619632-471f18b09d12', by: 'qiwei yang', user: 'qiweiyang', page: 'the-sun-is-shining-on-a-field-of-tall-grass-6RAJg8Na68U',
+      },
+    ];
+
+    const host = document.getElementById('studies');
+    const all = [];
+    for (const s of STUDIES) {
+      const card = el('article', 'study');
+      const frame = el('div', 'frame');
+      const canvas = el('canvas');
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', `${s.name}, applied to a photo by ${s.by}`);
+      const image = new Image();
+      image.crossOrigin = 'anonymous';
+      image.alt = '';
+      image.src = photo(s.img);
+      frame.append(canvas, image);
+      const d = Darkroom.mount(canvas, s.id, image, Object.fromEntries(s.dials.map(([k, , v]) => [k, v])));
+      s.mount = d; s.image = image;
+      all.push(d);
+
+      // Hold anywhere on the photo (or the button) to see the original.
+      const hold = (on) => d.compare(on);
+      const cmp = el('button', 'chip', 'Hold to compare');
+      cmp.type = 'button';
+      for (const t of [cmp]) {
+        t.addEventListener('pointerdown', () => hold(true));
+        t.addEventListener('pointerup', () => hold(false));
+        t.addEventListener('pointerleave', () => hold(false));
+        t.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); hold(true); } });
+        t.addEventListener('keyup', () => hold(false));
+      }
+      if (/compare/.test(s.pointer)) {
+        frame.addEventListener('pointerdown', () => hold(true));
+        frame.addEventListener('pointerup', () => hold(false));
+        frame.addEventListener('pointerleave', () => hold(false));
+      }
+
+      const head = el('div', 'head');
+      head.append(el('h2', 'label', s.name), el('p', 'muted', s.use));
+      const row = el('div', 'row');
+      const credit = el('p', 'credit');
+      credit.dataset.unsplash = '';
+      credit.innerHTML = `Photo: <a href="https://unsplash.com/@${s.user}${UTM}" target="_blank" rel="noopener"></a> on <a href="https://unsplash.com/photos/${s.page}${UTM}" target="_blank" rel="noopener">Unsplash</a>`;
+      credit.querySelector('a').textContent = s.by;
+      s.credit = credit;
+      row.append(el('p', 'muted', s.pointer), cmp);
+
+      const more = el('details', 'more');
+      const dials = el('div', 'dials');
+      for (const [k, label, v] of s.dials) {
+        const id = `${s.id}-${k}`;
+        const wrap = el('label', 'dial');
+        wrap.htmlFor = id;
+        const input = el('input');
+        Object.assign(input, { type: 'range', id, min: 0, max: 1, step: 0.01, value: v });
+        input.addEventListener('input', () => d.set(k, Number(input.value)));
+        wrap.append(el('span', 'muted', label), input);
+        dials.append(wrap);
+      }
+      more.append(el('summary', null, 'Dials and code'), dials, el('pre', 'code', Darkroom.SOURCES[s.id].trim()));
+
+      card.append(frame, head, row, credit, more);
+      host.append(card);
+    }
+
+    // Your own photo: read locally, shown in every study, never uploaded.
+    const own = document.getElementById('own'), reset = document.getElementById('reset');
+    own.addEventListener('change', () => {
+      const f = own.files[0];
+      if (!f || !f.type.startsWith('image/')) return;
+      const url = URL.createObjectURL(f);
+      for (const s of STUDIES) {
+        const im = new Image();
+        im.src = url;
+        s.mount.photo(im);
+        s.credit.textContent = 'Your photo';
+      }
+      reset.hidden = false;
+      own.value = '';
+    });
+    reset.addEventListener('click', () => {
+      for (const s of STUDIES) {
+        s.mount.photo(s.image);
+        s.credit.innerHTML = `Photo: <a href="https://unsplash.com/@${s.user}${UTM}" target="_blank" rel="noopener"></a> on <a href="https://unsplash.com/photos/${s.page}${UTM}" target="_blank" rel="noopener">Unsplash</a>`;
+        s.credit.querySelector('a').textContent = s.by;
+      }
+      reset.hidden = true;
+    });
+
+    const btn = document.getElementById('still');
+    const setStill = (on) => { all.forEach((m) => m.still(on)); btn.setAttribute('aria-pressed', String(on)); };
+    btn.addEventListener('click', () => setStill(btn.getAttribute('aria-pressed') !== 'true'));
+    setStill(matchMedia('(prefers-reduced-motion: reduce)').matches);
+  })();
+  </script>
+</body>
+</html>

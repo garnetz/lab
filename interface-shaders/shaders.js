@@ -388,8 +388,8 @@ void main() {
       raf = visible ? requestAnimationFrame(frame) : 0;
     }
     // Only draw while on screen.
-    new IntersectionObserver(([e]) => {
-      visible = e.isIntersecting;
+    new IntersectionObserver((entries) => {
+      visible = entries[entries.length - 1].isIntersecting;
       if (visible && !raf) { last = performance.now(); raf = requestAnimationFrame(frame); }
     }).observe(canvas);
     raf = requestAnimationFrame(frame);
