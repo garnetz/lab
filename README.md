@@ -12,6 +12,7 @@ Each folder is one experiment you can run on its own. The write-ups live at [arn
 | [Design rules](design-rules) | The rules my portfolio is built to, as a Claude skill you can download, with a real before and after. |
 | [Research to prototype: a fitness study](fitness-study) | Mobbin research on 32 screens, a moodboard, a visual language, six guidelines, and a prototype that follows them. |
 | [Darkroom](darkroom) | Six shaders that work on real photographs: relight a room, film halation, tilt-shift, film, sun rays and golden hour. Try them on your own photo. |
+| [The Sunken Crypt](sunken-crypt) | A dark action RPG in the spirit of Diablo 1, made with Claude Code in Godot: how it was made, and the first browser prototype to play. |
 | [Playlist from a photo](playlist-from-a-photo) | Claude reads a photo's light and mood and picks ten songs that sound the way it looks, with previews to play. |
 
 ## Licence

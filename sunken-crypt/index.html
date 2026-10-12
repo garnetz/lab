@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Sunken Crypt</title>
+  <meta name="description" content="A dark action RPG in the spirit of Diablo 1, designed by Gustav Arnetz and built with Claude Code in Godot. How it was made, and the first browser prototype to play." />
+  <style>
+  /* Grid, type and spacing follow design-rules/SKILL.md. */
+  :root {
+    color-scheme: dark;
+    --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px;
+  }
+  @media (max-width: 1199.98px) { :root { --margin: 24px; --gap: 24px; --h3: 40px; --space-l: 96px; --space-m: 64px; } }
+  @media (max-width: 809.98px) { :root { --margin: 16px; --gap: 16px; --h3: 32px; --space-l: 64px; --space-m: 48px; --space-s: 24px; } }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.4 ui-sans-serif, system-ui, sans-serif; padding-block: 0 var(--space-l); }
+  .page { max-width: 1440px; margin-inline: auto; padding-inline: var(--margin); padding-block: var(--space-m) 0; display: grid; gap: var(--space-l); }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-s) var(--gap); }
+  .muted { color: var(--muted); }
+  .label { font-size: 16px; line-height: 1.2; font-weight: 400; }
+  .h3 { font-size: var(--h3); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  .big { font-size: 24px; font-weight: 200; line-height: 1.4; }
+  p { text-wrap: pretty; }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: rgb(255 255 255 / 0.3); }
+  a:hover { text-decoration-color: currentColor; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .intro { align-items: baseline; }
+  .back { grid-column: 1; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
+  .back:hover { color: var(--ink); }
+  .body { grid-column: 2 / span 2; display: grid; gap: 16px; justify-items: start; align-content: start; }
+  @media (max-width: 1199.98px) { .body { grid-column: 2 / -1; } }
+  @media (max-width: 809.98px) { .back, .body { grid-column: 1 / -1; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { border: 1px solid var(--surface); border-radius: 4px; min-height: 44px; padding: 8px 16px; display: inline-flex; align-items: center; text-decoration: none; transition: border-color 0.2s var(--ease); }
+  .chip:hover { border-color: var(--muted); }
+  .chip.primary { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+  /* A section: its label in column 1, its content in columns 2 to 4. */
+  .section > .label { grid-column: 1; }
+  .section > .content { grid-column: 2 / -1; display: grid; gap: var(--space-s); }
+  @media (max-width: 1199.98px) { .section > .label, .section > .content { grid-column: 1 / -1; } }
+  .text { display: grid; gap: 16px; max-width: 48rem; }
+
+  figure { display: grid; gap: 8px; min-width: 0; }
+  figure img { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; display: block; border-radius: 4px; background: var(--surface); }
+  figcaption { color: var(--muted); }
+  .full { grid-column: 1 / -1; }
+  .half { grid-column: span 2; }
+  @media (max-width: 809.98px) { .half { grid-column: 1 / -1; } }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--gap); }
+  @media (max-width: 809.98px) { .pair { grid-template-columns: 1fr; } }
+
+  .points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); padding: 0; }
+  .points li { list-style: none; display: grid; gap: 8px; align-content: start; }
+  @media (max-width: 809.98px) { .points { grid-template-columns: 1fr; } }
+  .steps { display: grid; gap: var(--space-s); padding: 0; counter-reset: step; }
+  .steps li { list-style: none; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 0 16px; counter-increment: step; }
+  .steps li::before { content: counter(step); color: var(--muted); font-weight: 400; grid-row: span 2; }
+  .steps li > * { grid-column: 2; }
+  .steps .label { margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro grid4">
+      <a class="label muted back" href="https://portfolio.gustav-arnetz.workers.dev/lab">← Lab</a>
+      <div class="body">
+        <h1 class="h3">The Sunken Crypt</h1>
+        <p class="big muted">A dark action RPG in the spirit of Diablo 1. You go down through a generated, torchlit crypt beneath the drowned town of Hollowmere, with a lantern that runs out, skeletons in the dark and loot worth the risk. It's my first game. I designed and directed it, and Claude Code wrote it, in the Godot engine.</p>
+        <div class="chips">
+          <a class="chip primary" href="prototype/">Play the first prototype</a>
+        </div>
+        <p class="muted">The prototype runs in your browser, with a mouse or a touch screen. The full game is a Mac app.</p>
+      </div>
+    </header>
+
+    <figure class="grid4" style="row-gap: 8px">
+      <img class="full" src="images/fight.jpg" width="1280" height="720" alt="An isometric crypt in torchlight. The hero fights a Skeleton Warrior at the top of a stone stair, with damage numbers above them and two more skeletons waiting in the dark." />
+      <figcaption class="full">Dungeon level 3. A Skeleton Warrior, and a named guardian noticing you in the dark.</figcaption>
+    </figure>
+
+    <section class="section grid4" aria-labelledby="brief">
+      <h2 class="label" id="brief">The brief</h2>
+      <div class="content">
+        <div class="text">
+          <p class="big">Depth over breadth. One cursed town and one dungeon done well, rather than a big world done thinly. That's also a scope a first-time developer and Claude can actually finish.</p>
+          <p class="muted">It should feel the way Diablo 1 did: dread, scarcity and silence broken by sudden violence, not the bright loot fountain of later games. The design doc names three feelings to protect in every decision.</p>
+        </div>
+        <ul class="points">
+          <li><span class="label">Dread</span><span class="muted">You never see far. Sound and glowing eyes warn you before the monster appears.</span></li>
+          <li><span class="label">Want</span><span class="muted">Every unidentified item on the floor might be the one.</span></li>
+          <li><span class="label">Return</span><span class="muted">Dying hurts, the town is a relief, and going back down is a choice you make.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section grid4" aria-labelledby="how">
+      <h2 class="label" id="how">How it was made</h2>
+      <div class="content">
+        <p class="big text">I set the vision, judged every build by playing it and said what felt wrong. Claude Code wrote the code, the scenes, the shaders, the tests and even the sound.</p>
+        <ol class="steps">
+          <li><span class="label">A design doc first</span><span class="muted">Vision, core loop, classes, items, story, art direction and a roadmap of milestones, each ending in something playable. It also compared engines. Godot won over a browser game and over Unity or Unreal, because it has real lighting, shadows and animation and is free and open.</span></li>
+          <li><span class="label">A one-file browser prototype</span><span class="muted">Before any engine, a single web page tested the feel: click to walk and fight, a torch, potions, stairs down. It's the one you can play from this page.</span></li>
+          <li><span class="label">The game, one milestone at a time</span><span class="muted">Claude Code built the Godot project and pushed it to GitHub. I opened it, pressed Play and wrote down what felt wrong. Each round of notes became a batch of fixes, such as a lantern handed over in town, held attacks and save slots that remember levels.</span></li>
+          <li><span class="label">A Mac app on every change</span><span class="muted">Every change to the game builds a downloadable Mac app automatically, so the latest version was always one download away.</span></li>
+        </ol>
+        <figure>
+          <img src="images/prototype.jpg" width="1280" height="720" loading="lazy" alt="The browser prototype: a small isometric room with a torch on the wall, the hero with sword and shield, and red and blue globes for life and mana." />
+          <figcaption>The browser prototype, level 1. <a href="prototype/">Play it</a>.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section grid4" aria-labelledby="light">
+      <h2 class="label" id="light">Light is the art direction</h2>
+      <div class="content">
+        <div class="text">
+          <p class="big">Diablo 1's darkness, lit the way Valheim does it: simple low-poly models with chunky, pixel-crisp textures, made beautiful by the lighting.</p>
+          <p class="muted">You carry the main light. Torches, braziers and spells are the only other sources, and beyond them is a faint, dark mist rather than flat black. The palette is desaturated browns, greys and bone, with two saturated accents, fire orange and blood red. Magic is the only cold blue. Later, light became a rule as well as a look. Your lantern burns oil, and when it goes out, the dark gets dangerous.</p>
+        </div>
+        <div class="pair">
+          <figure>
+            <img src="images/before-lighting.jpg" width="640" height="360" loading="lazy" alt="An early build: smooth, evenly lit brown walls and floor." />
+            <figcaption>The first build, before the lighting pass.</figcaption>
+          </figure>
+          <figure>
+            <img src="images/after-lighting.jpg" width="640" height="360" loading="lazy" alt="The same crypt after the lighting pass: darker, with firelight on brick, fog and dithered, pixel-crisp stone." />
+            <figcaption>After it: fog, glow and pixel-crisp stone.</figcaption>
+          </figure>
+        </div>
+        <figure>
+          <img src="images/lantern.jpg" width="1280" height="720" loading="lazy" alt="The hero stands in a pool of lantern light on a stone floor, with a torch burning in an alcove and the rest of the crypt in darkness." />
+          <figcaption>Dungeon level 4. The lantern's pool of light, with its oil gauge at the bottom right.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section grid4" aria-labelledby="game">
+      <h2 class="label" id="game">The game today</h2>
+      <div class="content">
+        <p class="big text">Two classes, a warrior and a rogue, four kinds of skeletons, champions and a named guardian on every level, and magic, rare and unique items to hunt. Between trips there's a town with traders, quests and a journal.</p>
+        <div class="pair">
+          <figure>
+            <img src="images/town.jpg" width="1280" height="720" loading="lazy" alt="The town of Hollowmere at night in the rain: stone houses with lit windows, street lamps and puddles." />
+            <figcaption>Hollowmere at night. The town has its own clock, with day, night and rain.</figcaption>
+          </figure>
+          <figure>
+            <img src="images/inventory.jpg" width="1280" height="720" loading="lazy" alt="The character sheet and inventory: stats with points to spend, an equipment doll and a grid of items." />
+            <figcaption>Stats to spend and a grid inventory, where gold and loot fight for space.</figcaption>
+          </figure>
+        </div>
+        <figure>
+          <img src="images/title.jpg" width="1280" height="720" loading="lazy" alt="The title screen: The Sunken Crypt in thin gold capitals over a torchlit crypt, with Continue, Load game, New game, Settings, Controls and Quit." />
+          <figcaption>The title screen. Smoked glass, thin gold lines and drifting ash.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section grid4" aria-labelledby="built">
+      <h2 class="label" id="built">Built to grow</h2>
+      <div class="content">
+        <ul class="points">
+          <li><span class="label">Rules apart from visuals</span><span class="muted">The game's rules know nothing about graphics or sound. A click becomes an order, the rules decide what happens and the visuals draw it. That keeps co-op possible later without a rewrite.</span></li>
+          <li><span class="label">Tested on every change</span><span class="muted">Automated tests check rules like damage, loot rolls and saves. All the numbers for monsters and items sit in data files, so they can be balanced without touching the code.</span></li>
+          <li><span class="label">Its own sound</span><span class="muted">Alongside free sound libraries, Claude Code wrote scripts that made the game's own effects and music: dark ambient tracks for the crypt and a guitar theme for the title.</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section grid4" aria-labelledby="credits">
+      <h2 class="label" id="credits">Credits</h2>
+      <div class="content">
+        <p class="muted text">Characters and animations from <a href="https://www.mixamo.com">Mixamo</a> (Adobe). Weapons and dungeon props from KayKit by <a href="https://kaylousberg.com">Kay Lousberg</a> (CC0). Sound effects from <a href="https://kenney.nl">Kenney</a> (CC0), plus effects and music made for the game. Fonts are Cinzel and Cormorant Garamond (SIL Open Font License). Screenshots are from the current version of the game, taken with the game's own screenshot mode. Designed by Gustav Arnetz, made with Claude Code.</p>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
