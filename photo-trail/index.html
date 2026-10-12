@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Photo trail</title>
+  <meta name="description" content="Drop in the photos from a hike. Each one is placed on the route by the location and time saved in it, and the day replays with every photo at its spot. Your photos never leave your browser." />
+  <style>
+  /* Grid, type and spacing follow design-rules/SKILL.md. */
+  :root {
+    color-scheme: dark;
+    --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px;
+  }
+  @media (max-width: 1199.98px) { :root { --margin: 24px; --gap: 24px; --h3: 40px; --space-l: 96px; --space-m: 64px; } }
+  @media (max-width: 809.98px) { :root { --margin: 16px; --gap: 16px; --h3: 32px; --space-l: 64px; --space-m: 48px; --space-s: 24px; } }
+  * { box-sizing: border-box; margin: 0; }
+  [hidden] { display: none !important; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.4 ui-sans-serif, system-ui, sans-serif; padding-block: 0 var(--space-l); }
+  .page { max-width: 1440px; margin-inline: auto; padding-inline: var(--margin); padding-block: var(--space-m) 0; display: grid; gap: var(--space-l); }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-s) var(--gap); }
+  .muted { color: var(--muted); }
+  .label { font-size: 16px; line-height: 1.2; font-weight: 400; }
+  .h3 { font-size: var(--h3); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  .big { font-size: 24px; font-weight: 200; line-height: 1.4; }
+  p { text-wrap: pretty; }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: rgb(255 255 255 / 0.3); }
+  a:hover { text-decoration-color: currentColor; }
+  button, input, select { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .intro { align-items: baseline; }
+  .back { grid-column: 1; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
+  .back:hover { color: var(--ink); }
+  .body { grid-column: 2 / span 2; display: grid; gap: 16px; justify-items: start; }
+  @media (max-width: 1199.98px) { .body { grid-column: 2 / -1; } }
+  @media (max-width: 809.98px) { .back, .body { grid-column: 1 / -1; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chip { background: none; border: 1px solid var(--surface); border-radius: 4px; min-height: 44px; padding: 8px 16px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: border-color 0.2s var(--ease), background 0.2s var(--ease), color 0.2s var(--ease); }
+  .chip:hover { border-color: var(--muted); }
+  .chip.primary { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .chip select { background: var(--bg); border: 0; padding: 0 4px; min-height: 24px; }
+
+  .trail { grid-column: 1 / -1; display: grid; gap: 16px; }
+  .frame { position: relative; aspect-ratio: 3 / 2; border-radius: 4px; overflow: hidden; background: var(--surface); touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+  @media (max-width: 809.98px) { .frame { aspect-ratio: 3 / 4; } }
+  .frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .frame .overlay { pointer-events: none; }
+  .frame.drop { outline: 2px dashed var(--accent); outline-offset: -8px; }
+  .card { position: absolute; left: 0; top: 0; width: clamp(140px, 26%, 280px); pointer-events: none; display: grid; gap: 4px; transition: opacity 0.4s var(--ease); }
+  .card img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; display: block; background: var(--surface); box-shadow: 0 8px 32px rgb(0 0 0 / 0.6); }
+  .card p { font-size: 14px; color: var(--ink); text-shadow: 0 1px 4px #000; font-variant-numeric: tabular-nums; }
+  .empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--muted); pointer-events: none; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  .controls input[type=range] { flex: 1; min-width: 160px; accent-color: var(--accent); min-height: 44px; }
+  .now { font-variant-numeric: tabular-nums; min-width: 14ch; }
+  .strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: thin; }
+  .strip button { flex: none; width: 96px; display: grid; gap: 4px; padding: 0; background: none; border: 0; cursor: pointer; text-align: left; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .strip img { width: 96px; height: 72px; object-fit: cover; border-radius: 4px; display: block; border: 2px solid transparent; }
+  .strip button[aria-current='true'] { color: var(--ink); }
+  .strip button[aria-current='true'] img { border-color: var(--accent); }
+  .credit, .note { color: var(--muted); }
+
+  .what > .label { grid-column: 1 / -1; }
+  .what ul { display: contents; padding: 0; }
+  .what li { list-style: none; display: grid; gap: 8px; align-content: start; }
+  @media (max-width: 1199.98px) { .what li { grid-column: span 2; } }
+  @media (max-width: 809.98px) { .what li { grid-column: 1 / -1; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro grid4">
+      <a class="label muted back" href="https://portfolio.gustav-arnetz.workers.dev/lab">← Lab</a>
+      <div class="body">
+        <h1 class="h3">Photo trail</h1>
+        <p class="big muted">Drop in the photos from a hike. Each one goes on the map where it was taken, using the location and time your phone or camera saved in it, and the day plays back with every photo at its spot.</p>
+        <div class="chips">
+          <label class="chip primary" for="photos">Add your photos</label>
+          <input class="sr" id="photos" type="file" accept="image/jpeg" multiple />
+          <label class="chip" for="gpx">Add a GPX track</label>
+          <input class="sr" id="gpx" type="file" accept=".gpx,application/gpx+xml" />
+          <button class="chip" type="button" id="sample" hidden>Back to the sample</button>
+        </div>
+        <p class="muted">Your photos stay in your browser. Nothing is uploaded. JPEG photos work best; most phones can export them. A GPX track from a watch or app adds the real path and places photos that have a time but no location.</p>
+      </div>
+    </header>
+
+    <section class="grid4" aria-label="Trail">
+      <div class="trail">
+        <div class="frame" id="frame" tabindex="0" aria-label="Map of the trail. Drag to move, scroll or pinch to zoom.">
+          <canvas id="map" aria-hidden="true"></canvas>
+          <canvas id="overlay" class="overlay" aria-hidden="true"></canvas>
+          <figure class="card" id="card" hidden><img id="card-img" alt="" /><p id="card-cap"></p></figure>
+          <p class="empty" id="empty" hidden></p>
+        </div>
+        <div class="controls">
+          <button class="chip primary" type="button" id="play" aria-pressed="false">Play</button>
+          <label class="sr" for="scrub">Time of day</label>
+          <input id="scrub" type="range" min="0" max="1000" step="1" value="0" />
+          <span class="now label" id="now" aria-live="off"></span>
+          <label class="chip" id="shift-wrap" hidden><span class="muted">Camera clock</span>
+            <select id="shift" aria-label="Shift photo times"></select>
+          </label>
+        </div>
+        <div class="strip" id="strip" aria-label="Photos in order"></div>
+        <p class="note" id="note"></p>
+        <p class="credit" id="credit"></p>
+      </div>
+    </section>
+
+    <section class="what grid4" aria-label="How it works">
+      <p class="label">How it works</p>
+      <ul>
+        <li><span class="label">The photo knows</span><span class="muted">Most phones save where and when a photo was taken inside the file. The page reads that straight from the file, in your browser, before showing anything.</span></li>
+        <li><span class="label">Time fills the gaps</span><span class="muted">Cameras without GPS still keep the time. With a GPX track, each of those photos goes where you were at that moment. If the camera clock was off, shift it until the photos land right.</span></li>
+        <li><span class="label">Honest about misses</span><span class="muted">A photo with no location and no matching time isn't guessed onto the map. It's listed with the reason, so you know what to fix.</span></li>
+        <li><span class="label">Private by design</span><span class="muted">Where you were and when is personal. Nothing is uploaded or stored. Close the tab and it's gone. Only the map tiles come from the internet.</span></li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="map.js"></script>
+  <script src="trail.js"></script>
+  <script src="sample-route.js"></script>
+  <script>
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const UTM = '?utm_source=arnetz_lab&utm_medium=referral';
+    const PLAY_SECONDS = 24, HOLD_SECONDS = 1.6;
+
+    // ---------- The sample: the real Reinebringen trail, with Unsplash photos placed and timed by hand ----------
+    const SAMPLE_PHOTOS = [
+      { at: 0.0, wait: -4, img: 'photo-1650381694674-b6e79b1ed7ab', by: 'Fabian Jung', user: 'errior', page: 'a-red-house-sitting-on-top-of-a-body-of-water-1Zzj9O6h8Rw', alt: 'A red house on the water' },
+      { at: 0.28, img: 'photo-1703846488853-527e5e097ef5', by: 'Daniel', user: 'danieluvegard', page: 'a-black-and-white-photo-of-steps-leading-to-the-ocean-ARIWg6j9YQ0', alt: 'Stone steps leading down towards the sea' },
+      { at: 0.62, img: 'photo-1753696278559-38efaeafab72', by: 'Dinuka Lankaloka', user: 'bawva', page: 'scenic-mountains-rise-above-a-tranquil-bay-35YV98uEGko', alt: 'Mountains rising above a calm bay' },
+      { at: 1.0, wait: 2, img: 'photo-1673966863436-a20b06603981', by: 'Sébastien Goldberg', user: 'sebastiengoldberg', page: 'a-birds-eye-view-of-a-small-town-and-a-body-of-water-TWYFG9T5bpY', alt: 'A small town on the water, seen from far above' },
+      { at: 1.0, wait: 30, img: 'photo-1673966921966-df348406dac5', by: 'Sébastien Goldberg', user: 'sebastiengoldberg', page: 'the-sun-is-setting-over-a-mountain-range-1Rd7PW7ad3I', alt: 'The sun setting over a mountain range' },
+    ];
+
+    // Walking time from distance and climb (Naismith: 5 km an hour, plus 10 minutes per 100 metres up).
+    function estimateTimes(track, start) {
+      let t = start;
+      track.forEach((p, i) => {
+        if (i) { const a = track[i - 1]; t += ((p.d - a.d) / 5000) * 3600e3 + Math.max(0, (p.ele ?? 0) - (a.ele ?? 0)) * 6e3; }
+        p.time = t;
+      });
+    }
+
+    function sample() {
+      const track = SAMPLE_ROUTE.map(([lat, lon, ele]) => ({ lat, lon, ele }));
+      Trail.measure(track);
+      estimateTimes(track, Date.UTC(2026, 6, 18, 16, 40)); // 18:40 in Lofoten
+      const end = track[track.length - 1];
+      track.push({ ...end, time: end.time + 35 * 60e3 }); // a while on the top
+      const len = end.d;
+      const photos = SAMPLE_PHOTOS.map((s) => {
+        const i = track.findIndex((p) => p.d >= s.at * len - 1);
+        const p = track[Math.max(0, i)];
+        return { url: `https://images.unsplash.com/${s.img}?auto=format&fit=crop&w=900&h=675&q=75`, name: s.alt, alt: s.alt, lat: p.lat, lon: p.lon, alt_m: p.ele, time: p.time + (s.wait || 0) * 60e3, placedBy: 'gps', credit: s };
+      });
+      return { track, photos, zone: 'Europe/Oslo', sample: true };
+    }
+
+    // ---------- State ----------
+    let trip = null, t = 0, playing = false, hold = 0, current = -1, shiftHours = 0;
+    const map = ContourMap.mount($('map'), { dim: 0.55, maxFit: 15.8, onFrame: draw, onError: (msg) => showEmpty(msg) });
+    map.set('shade', 0.45);
+    const overlay = $('overlay'), ctx = overlay.getContext('2d');
+
+    const fmtTime = (ms) => new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: trip?.zone || undefined }).format(ms);
+    const fmtM = (m) => `${Math.round(m).toLocaleString('en-US').replace(/,/g, ' ')} m`;
+    const fmtKm = (m) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`);
+    function showEmpty(msg) { const e = $('empty'); e.textContent = msg || ''; e.hidden = !msg; }
+
+    function load(next) {
+      trip = next;
+      const placed = trip.photos.filter((p) => p.lat != null && p.time != null).sort((a, b) => a.time - b.time);
+      trip.placed = placed;
+      const tr = trip.track;
+      trip.start = Math.min(tr.length ? tr[0].time : Infinity, ...placed.map((p) => p.time));
+      trip.end = Math.max(tr.length ? tr[tr.length - 1].time : -Infinity, ...placed.map((p) => p.time));
+      if (!Number.isFinite(trip.start)) { trip.start = trip.end = 0; }
+      // Fit everything in view.
+      const pts = [...tr, ...placed];
+      if (pts.length) {
+        const lats = pts.map((p) => p.lat), lons = pts.map((p) => p.lon);
+        const padLat = (Math.max(...lats) - Math.min(...lats)) * 0.15 + 0.002, padLon = (Math.max(...lons) - Math.min(...lons)) * 0.15 + 0.004;
+        map.fit(Math.min(...lats) - padLat, Math.max(...lats) + padLat, Math.min(...lons) - padLon, Math.max(...lons) + padLon);
+      }
+      showEmpty(pts.length ? '' : 'None of these photos has a location or a time the map can use.');
+      buildStrip();
+      setT(trip.start);
+      $('sample').hidden = !!trip.sample;
+      $('credit').innerHTML = trip.sample
+        ? `Sample: the real Reinebringen trail in Lofoten from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>, with Unsplash photos by other photographers, placed and timed by hand to show the replay. Photos: ${SAMPLE_PHOTOS.filter((s, i, a) => a.findIndex((x) => x.user === s.user) === i).map((s) => `<a href="https://unsplash.com/@${s.user}${UTM}" target="_blank" rel="noopener">${s.by}</a>`).join(', ')} on <a href="https://unsplash.com/${UTM}" target="_blank" rel="noopener">Unsplash</a>. Elevation: <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">Terrain Tiles</a> by Mapzen on AWS Open Data.`
+        : `Map: <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">Terrain Tiles</a> by Mapzen on AWS Open Data, from open sources such as SRTM, EU-DEM and USGS.`;
+      const missed = trip.photos.filter((p) => p.lat == null || p.time == null);
+      $('note').textContent = trip.sample ? '' : [
+        `${placed.length} of ${trip.photos.length} photos placed${trip.track.length && !trip.gpx ? ', with the route drawn straight between them. Add a GPX track for the real path' : ''}.`,
+        ...missed.map((p) => `${p.name}: ${p.why || 'no location or time saved in the photo'}.`),
+        trip.estimated ? 'The track had no times, so they are estimated from distance and climb.' : '',
+      ].filter(Boolean).join(' ');
+    }
+
+    function buildStrip() {
+      const strip = $('strip');
+      strip.replaceChildren();
+      trip.placed.forEach((p, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.innerHTML = '<img alt="" loading="lazy" /><span></span>';
+        b.querySelector('img').src = p.url;
+        b.querySelector('span').textContent = fmtTime(p.time);
+        b.setAttribute('aria-label', `${p.alt || p.name}, ${fmtTime(p.time)}`);
+        b.addEventListener('click', () => { pause(); setT(p.time); current = i; showCard(); });
+        strip.append(b);
+      });
+    }
+
+    // ---------- Playback ----------
+    function where(time) {
+      const tr = trip.track;
+      if (tr.length && tr[0].time != null) return Trail.at(tr, time);
+      return null;
+    }
+    function setT(v) {
+      t = Math.max(trip.start, Math.min(trip.end, v));
+      let c = -1;
+      trip.placed.forEach((p, i) => { if (p.time <= t + 1) c = i; });
+      current = c;
+      $('scrub').value = String(trip.end > trip.start ? Math.round(((t - trip.start) / (trip.end - trip.start)) * 1000) : 0);
+      const q = where(t);
+      $('now').textContent = trip.end > trip.start ? [fmtTime(t), q && q.ele != null ? fmtM(q.ele) : '', q && q.d != null ? fmtKm(q.d) : ''].filter(Boolean).join(' · ') : '';
+      showCard();
+      map.redraw();
+    }
+    function showCard() {
+      [...$('strip').children].forEach((b, i) => b.setAttribute('aria-current', String(i === current)));
+      const p = trip.placed[current];
+      if (!p) { $('card').hidden = true; return; }
+      $('card').hidden = false;
+      if ($('card-img').getAttribute('src') !== p.url) { $('card-img').src = p.url; $('card-img').alt = p.alt || ''; }
+      const h = p.alt_m ?? p.ele;
+      $('card-cap').textContent = [fmtTime(p.time), typeof h === 'number' ? fmtM(h) : ''].filter(Boolean).join(' · ');
+      const sb = $('strip').children[current];
+      if (sb) sb.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+
+    let last = 0;
+    function tick(now) {
+      if (!playing) return;
+      const dt = Math.min(0.05, (now - (last || now)) / 1000); last = now;
+      if (hold > 0) hold -= dt;
+      else {
+        const before = current;
+        setT(t + ((trip.end - trip.start) / PLAY_SECONDS) * dt);
+        if (current !== before && current >= 0) hold = HOLD_SECONDS;
+        if (t >= trip.end) { pause(); return; }
+      }
+      requestAnimationFrame(tick);
+    }
+    function play() { if (t >= trip.end) setT(trip.start); playing = true; hold = 0; last = 0; $('play').textContent = 'Pause'; $('play').setAttribute('aria-pressed', 'true'); requestAnimationFrame(tick); }
+    function pause() { playing = false; $('play').textContent = 'Play'; $('play').setAttribute('aria-pressed', 'false'); }
+    $('play').addEventListener('click', () => (playing ? pause() : play()));
+    $('scrub').addEventListener('input', () => { pause(); setT(trip.start + (Number($('scrub').value) / 1000) * (trip.end - trip.start)); });
+
+    // ---------- Drawing on the map ----------
+    function draw() {
+      if (!trip) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const W = overlay.clientWidth, H = overlay.clientHeight;
+      if (overlay.width !== Math.round(W * dpr)) { overlay.width = Math.round(W * dpr); overlay.height = Math.round(H * dpr); }
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      const tr = trip.track;
+      const line = (pts, color, width) => {
+        if (pts.length < 2) return;
+        ctx.beginPath();
+        pts.forEach((p, i) => { const [x, y] = map.project(p.lat, p.lon); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+        ctx.strokeStyle = color; ctx.lineWidth = width; ctx.lineJoin = ctx.lineCap = 'round'; ctx.stroke();
+      };
+      line(tr, 'rgba(255,255,255,0.55)', 2);
+      const q = where(t);
+      if (q) line([...tr.slice(0, q.i), q], '#f1441d', 3);
+      // Photo spots.
+      trip.placed.forEach((p, i) => {
+        const [x, y] = map.project(p.lat, p.lon);
+        ctx.beginPath(); ctx.arc(x, y, i === current ? 6 : 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = p.time <= t ? '#f1441d' : '#fff'; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = '#000'; ctx.stroke();
+      });
+      // You, now.
+      if (q) {
+        const [x, y] = map.project(q.lat, q.lon);
+        ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fillStyle = 'rgba(241,68,29,0.25)'; ctx.fill();
+        ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
+      }
+      // The current photo, pinned above its spot (or below, near the top edge).
+      const p = trip.placed[current];
+      if (p) {
+        const card = $('card');
+        const [x, y] = map.project(p.lat, p.lon);
+        const w = card.offsetWidth, h = card.offsetHeight;
+        // Beside the spot, on the side with more room, so the trail ahead stays visible.
+        const right = x + 24 + w <= W - 8 || x < W / 2;
+        const left = Math.max(8, Math.min(W - w - 8, right ? x + 24 : x - 24 - w));
+        const top = y - h / 2;
+        card.style.transform = `translate(${left}px, ${Math.max(8, Math.min(H - h - 8, top))}px)`;
+      }
+    }
+
+    // ---------- Your photos ----------
+    let userPhotos = [], userTrack = null;
+    async function useFiles(files) {
+      const jpgs = [...files].filter((f) => /jpe?g$/i.test(f.name) || f.type === 'image/jpeg');
+      const gpx = [...files].find((f) => /\.gpx$/i.test(f.name));
+      if (gpx) userTrack = Trail.readGPX(await gpx.text());
+      if (jpgs.length) {
+        userPhotos.forEach((p) => URL.revokeObjectURL(p.url));
+        userPhotos = await Promise.all(jpgs.map(async (f) => ({ ...(await Trail.readPhoto(f)), url: URL.createObjectURL(f), name: f.name })));
+      }
+      const skipped = [...files].filter((f) => f !== gpx && !jpgs.includes(f));
+      rebuild(skipped.length ? `${skipped.length} file${skipped.length > 1 ? 's were' : ' was'} skipped: only JPEG photos and GPX tracks can be read here.` : '');
+    }
+    function rebuild(extra = '') {
+      if (!userPhotos.length && !userTrack) return;
+      const photos = userPhotos.map((p) => {
+        const q = { ...p, alt_m: p.ele };
+        if (q.time && q.clock === 'camera-local') q.time += shiftHours * 3600e3;
+        if (q.lat == null) { q.lat = null; q.lon = null; } // placed by time below, if possible
+        return q;
+      });
+      let track = [], estimated = false;
+      if (userTrack && userTrack.length) {
+        track = userTrack.map((p) => ({ ...p }));
+        Trail.measure(track);
+        if (track[0].time == null) { const first = photos.filter((p) => p.time).sort((a, b) => a.time - b.time)[0]; estimateTimes(track, first ? first.time : Date.now()); estimated = true; }
+        Trail.place(photos, track);
+      } else {
+        for (const p of photos) if (p.lat == null) p.why = p.time ? 'no location saved; add a GPX track to place it by time' : 'no location or time saved in the photo';
+        track = photos.filter((p) => p.lat != null && p.time != null).sort((a, b) => a.time - b.time).map((p) => ({ lat: p.lat, lon: p.lon, ele: p.ele, time: p.time }));
+        Trail.measure(track);
+      }
+      $('shift-wrap').hidden = !(userTrack && userPhotos.some((p) => p.clock === 'camera-local'));
+      load({ track, photos, gpx: !!(userTrack && userTrack.length), estimated, zone: undefined });
+      if (extra) $('note').textContent += ' ' + extra;
+    }
+    for (let h = -12; h <= 12; h++) { const o = document.createElement('option'); o.value = String(h); o.textContent = h === 0 ? 'as saved' : `${h > 0 ? '+' : '−'}${Math.abs(h)} h`; $('shift').append(o); }
+    $('shift').value = '0';
+    $('shift').addEventListener('change', () => { shiftHours = Number($('shift').value); rebuild(); });
+    $('photos').addEventListener('change', (e) => { useFiles(e.target.files); e.target.value = ''; });
+    $('gpx').addEventListener('change', (e) => { useFiles(e.target.files); e.target.value = ''; });
+    $('sample').addEventListener('click', () => { pause(); userPhotos.forEach((p) => URL.revokeObjectURL(p.url)); userPhotos = []; userTrack = null; $('shift-wrap').hidden = true; load(sample()); });
+    const frame = $('frame');
+    frame.addEventListener('dragover', (e) => { e.preventDefault(); frame.classList.add('drop'); });
+    frame.addEventListener('dragleave', () => frame.classList.remove('drop'));
+    frame.addEventListener('drop', (e) => { e.preventDefault(); frame.classList.remove('drop'); useFiles(e.dataTransfer.files); });
+    frame.addEventListener('keydown', (e) => {
+      if (e.key === ' ') { e.preventDefault(); playing ? pause() : play(); }
+      if (e.key === '+' || e.key === '=') map.zoomBy(1);
+      if (e.key === '-') map.zoomBy(-1);
+    });
+
+    load(sample());
+  })();
+  </script>
+</body>
+</html>
