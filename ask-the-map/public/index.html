@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ask the map</title>
+  <meta name="description" content="Ask for a walk in plain words. Real marked trails come back on a contour map, with the facts measured from open map data kept apart from Claude's guesses." />
+  <style>
+  /* Grid, type and spacing follow design-rules/SKILL.md. */
+  :root {
+    color-scheme: dark;
+    --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px;
+  }
+  @media (max-width: 1199.98px) { :root { --margin: 24px; --gap: 24px; --h3: 40px; --space-l: 96px; --space-m: 64px; } }
+  @media (max-width: 809.98px) { :root { --margin: 16px; --gap: 16px; --h3: 32px; --space-l: 64px; --space-m: 48px; --space-s: 24px; } }
+  * { box-sizing: border-box; margin: 0; }
+  [hidden] { display: none !important; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.4 ui-sans-serif, system-ui, sans-serif; padding-block: 0 var(--space-l); }
+  .page { max-width: 1440px; margin-inline: auto; padding-inline: var(--margin); padding-block: var(--space-m) 0; display: grid; gap: var(--space-l); }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-s) var(--gap); }
+  .muted { color: var(--muted); }
+  .label { font-size: 16px; line-height: 1.2; font-weight: 400; }
+  .h3 { font-size: var(--h3); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  .big { font-size: 24px; font-weight: 200; line-height: 1.4; }
+  p { text-wrap: pretty; }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: rgb(255 255 255 / 0.3); }
+  a:hover { text-decoration-color: currentColor; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .intro { align-items: baseline; }
+  .back { grid-column: 1; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
+  .back:hover { color: var(--ink); }
+  .body { grid-column: 2 / span 2; display: grid; gap: 16px; justify-items: start; }
+  @media (max-width: 1199.98px) { .body { grid-column: 2 / -1; } }
+  @media (max-width: 809.98px) { .back, .body { grid-column: 1 / -1; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chip { background: none; border: 1px solid var(--surface); border-radius: 4px; min-height: 44px; padding: 8px 16px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-align: left; transition: border-color 0.2s var(--ease), background 0.2s var(--ease), color 0.2s var(--ease); }
+  .chip:hover { border-color: var(--muted); }
+  .chip.primary { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .chip:disabled { opacity: 0.5; cursor: default; }
+
+  .ask { grid-column: 1 / -1; display: grid; gap: 16px; }
+  .ask form { display: flex; gap: 8px; }
+  .ask input[type=text] { flex: 1; min-width: 0; min-height: 56px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--surface); border-radius: 4px; font-size: 20px; font-weight: 200; }
+  .ask input[type=text]:focus { border-color: var(--muted); outline: none; }
+  .ask form .chip { min-height: 56px; padding-inline: 24px; }
+  @media (max-width: 809.98px) { .ask form { flex-direction: column; } .ask input[type=text] { font-size: 18px; } }
+  .progress { min-height: 1.4em; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .progress.busy::after { content: ''; display: inline-block; width: 1.2em; text-align: left; animation: dots 1.2s steps(4) infinite; }
+  @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }
+  @media (prefers-reduced-motion: reduce) { .progress.busy::after { animation: none; content: '…'; } }
+
+  .frame { grid-column: 1 / -1; position: relative; aspect-ratio: 16 / 9; border-radius: 4px; overflow: hidden; background: var(--surface); touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+  @media (max-width: 809.98px) { .frame { aspect-ratio: 4 / 5; } }
+  .frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .frame .overlay { pointer-events: none; }
+  .empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: var(--muted); pointer-events: none; }
+  .zoom { position: absolute; right: 16px; bottom: 16px; display: grid; gap: 8px; }
+  .zoom button { width: 44px; height: 44px; border-radius: 4px; border: 0; background: rgb(0 0 0 / 0.6); cursor: pointer; font-size: 20px; font-weight: 400; }
+  .zoom button:hover { background: rgb(0 0 0 / 0.85); }
+
+  .said { grid-column: 1; display: grid; gap: 16px; align-content: start; }
+  .picks { grid-column: 2 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gap); align-content: start; }
+  @media (max-width: 1199.98px) { .said { grid-column: 1 / -1; } .picks { grid-column: 1 / -1; } }
+  @media (max-width: 809.98px) { .picks { grid-template-columns: minmax(0, 1fr); } }
+  .pick { display: grid; gap: 16px; align-content: start; padding-top: 16px; border-top: 1px solid var(--surface); transition: border-color 0.3s var(--ease); }
+  .pick.on { border-top-color: var(--accent); }
+  .pick > button { background: none; border: 0; padding: 0; text-align: left; cursor: pointer; display: grid; gap: 8px; min-height: 44px; }
+  .pick .num { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .pick.on .num { color: var(--accent); }
+  .pick .name { font-size: 24px; line-height: 1.2; font-weight: 200; }
+  .pick .stats { font-variant-numeric: tabular-nums; }
+  .pick ul { padding: 0; display: grid; gap: 8px; }
+  .pick li { list-style: none; }
+  .pick .kind { display: block; margin-bottom: 4px; }
+  .pick .guess li::before { content: '~ '; color: var(--muted); }
+  .pick .watch { color: var(--ink); }
+  .pick .osm { font-size: 14px; }
+
+  .credit { grid-column: 1 / -1; color: var(--muted); }
+  .what > .label { grid-column: 1 / -1; }
+  .what ul { display: contents; padding: 0; }
+  .what li { list-style: none; display: grid; gap: 8px; align-content: start; }
+  @media (max-width: 1199.98px) { .what li { grid-column: span 2; } }
+  @media (max-width: 809.98px) { .what li { grid-column: 1 / -1; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro grid4">
+      <a class="label muted back" href="https://portfolio.gustav-arnetz.workers.dev/lab">← Lab</a>
+      <div class="body">
+        <h1 class="h3">Ask the map</h1>
+        <p class="big muted">Ask for a walk the way you'd ask a friend. Real marked trails come back on a contour map. What the map can measure is kept apart from what Claude is guessing, so you know which is which.</p>
+      </div>
+    </header>
+
+    <section class="grid4" aria-label="Ask">
+      <div class="ask">
+        <form id="form">
+          <label class="sr" for="q">What kind of walk?</label>
+          <input id="q" type="text" maxlength="300" autocomplete="off" spellcheck="true" value="A three-hour loop near Stockholm with a lake and a sunset view" />
+          <button class="chip primary" type="submit" id="go">Ask</button>
+        </form>
+        <div class="chips" id="examples" aria-label="Examples"></div>
+        <p class="progress" id="progress" aria-live="polite"></p>
+      </div>
+      <div class="frame" id="frame" tabindex="0" aria-label="Contour map with the trails. Drag to move, scroll or pinch to zoom.">
+        <canvas id="map" aria-hidden="true"></canvas>
+        <canvas id="overlay" class="overlay" aria-hidden="true"></canvas>
+        <p class="empty" id="empty" hidden></p>
+        <div class="zoom"><button type="button" id="zin" aria-label="Zoom in">+</button><button type="button" id="zout" aria-label="Zoom out">−</button></div>
+      </div>
+      <div class="said" id="said" aria-live="polite"></div>
+      <div class="picks" id="picks"></div>
+      <p class="credit" id="credit">Trails and places: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors (ODbL), through the <a href="https://overpass-api.de/" target="_blank" rel="noopener">Overpass API</a> and <a href="https://nominatim.org/" target="_blank" rel="noopener">Nominatim</a>. Elevation: <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">Terrain Tiles</a> by Mapzen on AWS Open Data. Walking times by Naismith's rule; sunset by NOAA's formula.</p>
+    </section>
+
+    <section class="what grid4" aria-label="How it works">
+      <p class="label">How it works</p>
+      <ul>
+        <li><span class="label">Claude reads the ask</span><span class="muted">Your words become things a map can check: where, how long, a loop or not, and what you want to pass. Anything a map can't tell, like mud or crowds, is named as such.</span></li>
+        <li><span class="label">The map does the facts</span><span class="muted">Marked trails come from OpenStreetMap. Length, climb, walking time, the lakes and viewpoints along the way, and how high the land rises toward the sunset are all measured in your browser.</span></li>
+        <li><span class="label">Claude picks and guesses</span><span class="muted">Claude sees only those measured facts. It picks up to three and says why, and anything it can't know from the map is written as a guess and marked with ~.</span></li>
+        <li><span class="label">No invented trails</span><span class="muted">Every route on the map is a real, marked trail someone mapped. If nothing fits, it says which part of the ask it couldn't meet, rather than drawing one.</span></li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="map.js"></script>
+  <script src="routes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
