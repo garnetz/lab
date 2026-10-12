@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contour map of anywhere</title>
+  <meta name="description" content="Search any place and see it as a live topographic map: real, open elevation data drawn as contour lines by one shader, lit by a sun you can turn." />
+  <style>
+  /* Grid, type and spacing follow design-rules/SKILL.md. */
+  :root {
+    color-scheme: dark;
+    --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px;
+  }
+  @media (max-width: 1199.98px) { :root { --margin: 24px; --gap: 24px; --h3: 40px; --space-l: 96px; --space-m: 64px; } }
+  @media (max-width: 809.98px) { :root { --margin: 16px; --gap: 16px; --h3: 32px; --space-l: 64px; --space-m: 48px; --space-s: 24px; } }
+  * { box-sizing: border-box; margin: 0; }
+  [hidden] { display: none !important; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.4 ui-sans-serif, system-ui, sans-serif; padding-block: 0 var(--space-l); }
+  .page { max-width: 1440px; margin-inline: auto; padding-inline: var(--margin); padding-block: var(--space-m) 0; display: grid; gap: var(--space-l); }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-s) var(--gap); }
+  .muted { color: var(--muted); }
+  .label { font-size: 16px; line-height: 1.2; font-weight: 400; }
+  .h3 { font-size: var(--h3); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  .big { font-size: 24px; font-weight: 200; line-height: 1.4; }
+  p { text-wrap: pretty; }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: rgb(255 255 255 / 0.3); }
+  a:hover { text-decoration-color: currentColor; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .intro { align-items: baseline; }
+  .back { grid-column: 1; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
+  .back:hover { color: var(--ink); }
+  .body { grid-column: 2 / span 2; display: grid; gap: 16px; justify-items: start; }
+  @media (max-width: 1199.98px) { .body { grid-column: 2 / -1; } }
+  @media (max-width: 809.98px) { .back, .body { grid-column: 1 / -1; } }
+
+  .search { display: flex; gap: 8px; width: 100%; max-width: 32rem; }
+  .search input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 16px; background: none; border: 1px solid var(--surface); border-radius: 4px; }
+  .search input::placeholder { color: var(--muted); }
+  .search input:hover { border-color: var(--muted); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: none; border: 1px solid var(--surface); border-radius: 4px; min-height: 44px; padding: 8px 16px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: border-color 0.2s var(--ease), background 0.2s var(--ease), color 0.2s var(--ease); }
+  .chip:hover { border-color: var(--muted); }
+  .chip.primary, .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .status { color: var(--muted); min-height: 1.4em; }
+
+  .map { grid-column: 1 / -1; display: grid; gap: 16px; }
+  .frame { position: relative; aspect-ratio: 3 / 2; border-radius: 4px; overflow: hidden; background: var(--surface); touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+  .frame:active { cursor: grabbing; }
+  @media (max-width: 809.98px) { .frame { aspect-ratio: 3 / 4; } }
+  .frame canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .frame .no-gl-note { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--muted); }
+  .here { position: absolute; top: 16px; left: 16px; pointer-events: none; font-weight: 400; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .zoom { position: absolute; right: 16px; bottom: 16px; display: grid; gap: 8px; }
+  .zoom .chip { width: 44px; padding: 0; background: rgb(0 0 0 / 0.6); }
+  .readout { display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
+  .readout span { font-variant-numeric: tabular-nums; }
+  .credit { color: var(--muted); }
+
+  .more summary { cursor: pointer; color: var(--muted); min-height: 44px; display: flex; align-items: center; }
+  .more summary:hover { color: var(--ink); }
+  .more[open] { display: grid; gap: 16px; }
+  .dials { display: grid; gap: 8px var(--gap); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 809.98px) { .dials { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .dial { display: grid; gap: 4px; }
+  .dial input { width: 100%; accent-color: var(--accent); min-height: 44px; }
+
+  .what > .label { grid-column: 1 / -1; }
+  .what ul { display: contents; padding: 0; }
+  .what li { list-style: none; display: grid; gap: 8px; align-content: start; }
+  @media (max-width: 1199.98px) { .what li { grid-column: span 2; } }
+  @media (max-width: 809.98px) { .what li { grid-column: 1 / -1; } }
+  .sources { grid-column: 1 / -1; }
+  .sources ul { padding-left: 1.2em; display: grid; gap: 4px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro grid4">
+      <a class="label muted back" href="https://portfolio.gustav-arnetz.workers.dev/lab">← Lab</a>
+      <div class="body">
+        <h1 class="h3">Contour map of anywhere</h1>
+        <p class="big muted">Search a place and see it as a topographic map, drawn live from real elevation data. Point at the map and the line at that height lights up, so you can follow it around the mountain. Turn the sun to read the shape of the land.</p>
+        <form class="search" id="search" role="search">
+          <input id="q" name="q" type="search" placeholder="A mountain, a valley, a town" autocomplete="off" enterkeyhint="search" aria-label="Place" />
+          <button class="chip primary" type="submit">Search</button>
+        </form>
+        <div class="chips" id="places" aria-label="Places to try"></div>
+        <p class="status" id="status" aria-live="polite"></p>
+      </div>
+    </header>
+
+    <section class="grid4" aria-label="Map">
+      <div class="map">
+        <div class="frame" id="frame" tabindex="0" aria-label="Contour map. Drag or use the arrow keys to move, scroll, pinch or press plus and minus to zoom.">
+          <canvas id="map" role="img" aria-label="Contour lines of the area in view"></canvas>
+          <p class="no-gl-note" id="nogl" hidden></p>
+          <p class="here label" id="here" aria-live="polite"></p>
+          <div class="zoom">
+            <button class="chip" type="button" id="zin" aria-label="Zoom in">+</button>
+            <button class="chip" type="button" id="zout" aria-label="Zoom out">−</button>
+          </div>
+        </div>
+        <div class="readout">
+          <span class="label" id="place">Reine, Lofoten, Norway</span>
+          <span class="muted" id="facts"></span>
+        </div>
+        <p class="credit">Elevation: <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">Terrain Tiles</a> by Mapzen on AWS Open Data, from <a href="#sources">open sources</a> such as SRTM, EU-DEM and USGS. Search: <a href="https://nominatim.org" target="_blank" rel="noopener">Nominatim</a>, © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.</p>
+        <details class="more">
+          <summary>Dials</summary>
+          <div class="dials">
+            <label class="dial" for="d-density"><span class="muted">Lines</span><input id="d-density" type="range" min="0" max="1" step="0.01" value="0.35" /></label>
+            <label class="dial" for="d-shade"><span class="muted">Shading</span><input id="d-shade" type="range" min="0" max="1" step="0.01" value="0.6" /></label>
+            <label class="dial" for="d-sun"><span class="muted">Sun direction</span><input id="d-sun" type="range" min="0" max="1" step="0.005" value="0.875" /></label>
+            <label class="dial" for="d-warm"><span class="muted">Golden light</span><input id="d-warm" type="range" min="0" max="1" step="0.01" value="0" /></label>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="what grid4" aria-label="How it works">
+      <p class="label">How it works</p>
+      <ul>
+        <li><span class="label">Real ground</span><span class="muted">The heights come from open elevation tiles that cover the whole planet, sharper where countries have published detailed surveys. They're colour-coded images, decoded into metres in your browser.</span></li>
+        <li><span class="label">One shader draws it all</span><span class="muted">For every pixel, the shader finds the height and draws a line where it crosses a round number. Every fifth line is thicker, like on a paper map. Nothing is drawn ahead of time.</span></li>
+        <li><span class="label">Lines you can read</span><span class="muted">The spacing follows what's in view. A gentle valley gets a line every 5 or 10 metres and a big mountain every 100, so the map never turns into noise or goes blank.</span></li>
+        <li><span class="label">Light as a reading tool</span><span class="muted">Shading shows which slopes face the sun. Turn it to see a ridge from another side, or warm it to see the land the way it looks at golden hour.</span></li>
+      </ul>
+      <div class="sources muted" id="sources">
+        <p>The terrain data comes from these sources. Terrain Tiles combines them:</p>
+        <ul>
+          <li>ArcticDEM terrain data DEM(s) were created from DigitalGlobe, Inc., imagery and funded under National Science Foundation awards 1043681, 1559691, and 1542736</li>
+          <li>Australia terrain data © Commonwealth of Australia (Geoscience Australia) 2017</li>
+          <li>Austria terrain data © offene Daten Österreichs, Digitales Geländemodell (DGM) Österreich</li>
+          <li>Canada terrain data contains information licensed under the Open Government Licence, Canada</li>
+          <li>Europe terrain data produced using Copernicus data and information funded by the European Union, EU-DEM layers</li>
+          <li>Global ETOPO1 terrain data U.S. National Oceanic and Atmospheric Administration</li>
+          <li>Mexico terrain data source: INEGI, Continental relief, 2016</li>
+          <li>New Zealand terrain data Copyright 2011 Crown copyright (c) Land Information New Zealand and the New Zealand Government (All rights reserved)</li>
+          <li>Norway terrain data © Kartverket</li>
+          <li>United Kingdom terrain data © Environment Agency copyright and/or database right 2015. All rights reserved</li>
+          <li>United States 3DEP (formerly NED) and global GMTED2010 and SRTM terrain data courtesy of the U.S. Geological Survey</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="map.js"></script>
+  <script>
+  (() => {
+    const $ = (id) => document.getElementById(id);
+    const fmt = (m) => `${Math.round(m).toLocaleString('en-US').replace(/,/g, ' ')} m`;
+    const PLACES = [
+      { name: 'Lofoten', full: 'Reine, Lofoten, Norway', lat: 67.93, lon: 13.07, zoom: 12 },
+      { name: 'Kebnekaise', full: 'Kebnekaise, Sweden', lat: 67.9002, lon: 18.5275, zoom: 12.4 },
+      { name: 'Matterhorn', full: 'Matterhorn, Switzerland', lat: 45.9763, lon: 7.6586, zoom: 12.6 },
+      { name: 'Mount Fuji', full: 'Mount Fuji, Japan', lat: 35.3606, lon: 138.7274, zoom: 11.6 },
+      { name: 'Grand Canyon', full: 'Grand Canyon, United States', lat: 36.0997, lon: -112.1124, zoom: 12 },
+    ];
+
+    const status = $('status');
+    const map = ContourMap.mount($('map'), {
+      onChange: (s) => {
+        $('facts').textContent = `Lines every ${s.interval} m, thick every ${s.interval * 5} m · Highest in view ${fmt(s.hi)}`;
+      },
+      onHere: (h) => { $('here').textContent = h == null ? '' : `Here ${fmt(h)}`; },
+      onError: (msg) => { const n = $('nogl'); n.textContent = msg; n.hidden = false; },
+    });
+
+    const placeEl = $('place');
+    const chips = PLACES.map((p) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip'; b.textContent = p.name;
+      b.addEventListener('click', () => { map.go(p.lat, p.lon, p.zoom); placeEl.textContent = p.full; select(b); status.textContent = ''; });
+      $('places').append(b);
+      return b;
+    });
+    const select = (b) => chips.forEach((c) => c.setAttribute('aria-pressed', String(c === b)));
+    select(chips[0]);
+
+    // Search: one request per search, through Nominatim (OpenStreetMap). No typing-ahead, as its usage policy asks.
+    $('search').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const q = $('q').value.trim();
+      if (!q) return;
+      status.textContent = 'Looking…';
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`, { headers: { 'Accept-Language': 'en' } });
+        const [hit] = await r.json();
+        if (!hit) { status.textContent = `Couldn't find “${q}”. Try a nearby town or a mountain's name.`; return; }
+        const [s, n, w, ea] = hit.boundingbox.map(Number);
+        map.fit(s, n, w, ea);
+        placeEl.textContent = hit.display_name.split(', ').slice(0, 3).join(', ');
+        select(null);
+        status.textContent = '';
+      } catch {
+        status.textContent = 'Search is not answering right now. Try one of the places below.';
+      }
+    });
+
+    $('zin').addEventListener('click', () => map.zoomBy(1));
+    $('zout').addEventListener('click', () => map.zoomBy(-1));
+    $('frame').addEventListener('keydown', (e) => {
+      const step = 80;
+      const k = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+      if (k) { e.preventDefault(); map.panBy(k[0], k[1]); }
+      if (e.key === '+' || e.key === '=') { e.preventDefault(); map.zoomBy(1); }
+      if (e.key === '-' || e.key === '_') { e.preventDefault(); map.zoomBy(-1); }
+    });
+    for (const k of ['density', 'shade', 'sun', 'warm']) {
+      const input = $(`d-${k}`);
+      input.addEventListener('input', () => map.set(k, Number(input.value)));
+    }
+  })();
+  </script>
+</body>
+</html>
