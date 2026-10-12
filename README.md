@@ -11,6 +11,7 @@ Each folder is one experiment you can run on its own. The write-ups live at [arn
 | [Shaders for interfaces](interface-shaders) | Ten shaders placed in real screens (sign in, a trail map, a camera, a shutter, a payment) and driven by their states, four of them about light. |
 | [Design rules](design-rules) | The rules my portfolio is built to, as a Claude skill you can download, with a real before and after. |
 | [Research to prototype: a fitness study](fitness-study) | Mobbin research on 32 screens, a moodboard, a visual language, six guidelines, and a prototype that follows them. |
+| [Darkroom](darkroom) | Six shaders that work on real photographs: relight a room, film halation, tilt-shift, film, sun rays and golden hour. Try them on your own photo. |
 | [Playlist from a photo](playlist-from-a-photo) | Claude reads a photo's light and mood and picks ten songs that sound the way it looks, with previews to play. |
 
 ## Licence
