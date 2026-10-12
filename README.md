@@ -17,6 +17,7 @@ Each folder is one experiment you can run on its own. The write-ups live at [arn
 | [Photo trail](photo-trail) | Photos from a hike placed on the map by the location and time saved in them, then the day replays with each photo at its spot. Photos stay in your browser. |
 | [Turnaround time](turnaround-time) | From your pace, the climb ahead and the daylight left: when to turn back, and how sure that is. A study in designing for uncertainty. |
 | [Ask the map](ask-the-map) | Ask for a walk in plain words and get real marked trails on a contour map, with what the map measured kept apart from Claude's guesses. |
+| [Trail card](trail-card) | A trail view for no signal, cold hands and low battery: four glanceable cards, packed for offline, with lessons from designing for cars. |
 | [Playlist from a photo](playlist-from-a-photo) | Claude reads a photo's light and mood and picks ten songs that sound the way it looks, with previews to play. |
 
 ## Licence

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trail card</title>
+  <meta name="description" content="A trail view for bad conditions: no signal, cold hands, low battery. Lessons from designing for cars, taken up a mountain." />
+  <meta name="theme-color" content="#000000" />
+  <style>
+  /* Grid, type and spacing follow design-rules/SKILL.md. */
+  :root {
+    color-scheme: dark;
+    --bg: #000; --surface: #1a1a1a; --ink: rgb(255 255 255 / 0.9); --muted: rgb(255 255 255 / 0.6); --accent: #f1441d;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --margin: 40px; --gap: 40px; --h3: 48px; --space-l: 120px; --space-m: 80px; --space-s: 40px;
+  }
+  @media (max-width: 1199.98px) { :root { --margin: 24px; --gap: 24px; --h3: 40px; --space-l: 96px; --space-m: 64px; } }
+  @media (max-width: 809.98px) { :root { --margin: 16px; --gap: 16px; --h3: 32px; --space-l: 64px; --space-m: 48px; --space-s: 24px; } }
+  * { box-sizing: border-box; margin: 0; }
+  [hidden] { display: none !important; }
+  body { background: var(--bg); color: var(--ink); font: 200 16px/1.4 ui-sans-serif, system-ui, sans-serif; padding-block: 0 var(--space-l); }
+  .page { max-width: 1440px; margin-inline: auto; padding-inline: var(--margin); padding-block: var(--space-m) 0; display: grid; gap: var(--space-l); }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-s) var(--gap); }
+  .muted { color: var(--muted); }
+  .label { font-size: 16px; line-height: 1.2; font-weight: 400; }
+  .h3 { font-size: var(--h3); font-weight: 400; line-height: 1.1; letter-spacing: -0.02em; text-wrap: balance; }
+  .big { font-size: 24px; font-weight: 200; line-height: 1.4; }
+  p { text-wrap: pretty; }
+  a { color: inherit; text-underline-offset: 3px; text-decoration-color: rgb(255 255 255 / 0.3); }
+  a:hover { text-decoration-color: currentColor; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  .intro { align-items: baseline; }
+  .back { grid-column: 1; text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; align-self: start; }
+  .back:hover { color: var(--ink); }
+  .body { grid-column: 2 / span 2; display: grid; gap: 16px; justify-items: start; }
+  @media (max-width: 1199.98px) { .body { grid-column: 2 / -1; } }
+  @media (max-width: 809.98px) { .back, .body { grid-column: 1 / -1; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .chip { background: none; border: 1px solid var(--surface); border-radius: 4px; min-height: 44px; padding: 8px 16px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: border-color 0.2s var(--ease), background 0.2s var(--ease), color 0.2s var(--ease); }
+  .chip:hover { border-color: var(--muted); }
+  .chip[aria-pressed='true'] { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+  /* ---------- The demo: the phone, and the controls that stand in for the mountain ---------- */
+  .stage { align-items: start; }
+  .device { grid-column: 1 / span 2; display: grid; justify-items: center; }
+  .side { grid-column: 3 / -1; display: grid; gap: var(--space-s); align-content: start; }
+  @media (max-width: 809.98px) { .device, .side { grid-column: 1 / -1; } }
+  .sim { display: grid; gap: 16px; }
+  .sim input[type=range] { width: 100%; accent-color: var(--accent); min-height: 44px; }
+  .sim .row { display: grid; gap: 8px; }
+  .status { color: var(--muted); }
+
+  /* The trail card itself. Everything inside is sized for a gloved thumb and a two-second glance. */
+  .phone {
+    --c-bg: #000; --c-ink: #fff; --c-dim: rgb(255 255 255 / 0.62); --c-line: rgb(255 255 255 / 0.16); --c-hot: #f1441d;
+    width: min(100%, 390px); aspect-ratio: 9 / 19; max-height: 86vh; border: 1px solid var(--surface); border-radius: 36px; overflow: hidden;
+    background: var(--c-bg); color: var(--c-ink); display: grid; grid-template-rows: auto 1fr auto; position: relative;
+    font-weight: 400;
+  }
+  @media (max-width: 809.98px) { .phone { aspect-ratio: auto; height: min(86vh, 760px); width: 100%; } }
+  .phone.night { --c-ink: #ff3b24; --c-dim: rgb(255 59 36 / 0.62); --c-line: rgb(255 59 36 / 0.2); --c-hot: #ff3b24; }
+  .phone.saver { --c-ink: rgb(255 255 255 / 0.78); --c-dim: rgb(255 255 255 / 0.5); --c-hot: rgb(255 255 255 / 0.9); }
+  .phone.night.saver { --c-ink: rgb(255 59 36 / 0.8); --c-dim: rgb(255 59 36 / 0.5); }
+  .bar { display: flex; justify-content: space-between; gap: 8px; padding: 16px 24px 8px; font-size: 14px; color: var(--c-dim); font-variant-numeric: tabular-nums; }
+  .screen { position: relative; min-height: 0; cursor: pointer; overflow: hidden; }
+  .card { position: absolute; inset: 0; padding: 16px 24px 24px; display: grid; align-content: start; gap: 16px; }
+  .k { font-size: 20px; color: var(--c-dim); }
+  .huge { font-size: clamp(56px, 19cqi, 88px); line-height: 0.95; font-weight: 500; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .phone { container-type: inline-size; }
+  .mid { font-size: 24px; line-height: 1.25; font-variant-numeric: tabular-nums; }
+  .hot { color: var(--c-hot); }
+  .dir { display: flex; align-items: center; gap: 16px; font-size: 24px; line-height: 1.2; }
+  .dir svg { flex: none; width: 64px; height: 64px; }
+  .dir svg path { fill: var(--c-ink); }
+  .dir svg circle { fill: none; stroke: var(--c-line); stroke-width: 2; }
+  .dir svg text { fill: var(--c-dim); font-size: 13px; font-weight: 500; }
+  .profile { width: 100%; height: 72px; display: block; }
+  .big-btn { width: 100%; min-height: 72px; border-radius: 16px; border: 2px solid var(--c-line); background: none; color: var(--c-ink); font-size: 22px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+  .big-btn:active { background: var(--c-line); }
+  .card-map { padding: 0; }
+  .card-map canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .card-map .note { position: absolute; left: 16px; bottom: 16px; right: 16px; font-size: 14px; color: var(--c-dim); text-shadow: 0 1px 4px #000; }
+  .phone.night .card-map canvas { filter: sepia(1) saturate(6) hue-rotate(-30deg) brightness(0.75); }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--c-line); }
+  .tabs button { min-height: 80px; background: none; border: 0; color: var(--c-dim); font-size: 18px; font-weight: 500; cursor: pointer; padding: 0 0 8px; }
+  .tabs button[aria-selected='true'] { color: var(--c-ink); box-shadow: inset 0 3px 0 var(--c-hot); }
+  .packmap { position: fixed; left: -10000px; top: 0; width: 390px; height: 700px; pointer-events: none; }
+  .packmap canvas { width: 100%; height: 100%; display: block; }
+
+  .what > .label { grid-column: 1 / -1; }
+  .what ul { display: contents; padding: 0; }
+  .what li { list-style: none; display: grid; gap: 8px; align-content: start; }
+  @media (max-width: 1199.98px) { .what li { grid-column: span 2; } }
+  @media (max-width: 809.98px) { .what li { grid-column: 1 / -1; } }
+  .credit { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro grid4">
+      <a class="label muted back" href="https://portfolio.gustav-arnetz.workers.dev/lab">← Lab</a>
+      <div class="body">
+        <h1 class="h3">Trail card</h1>
+        <p class="big muted">A trail view for the moments a normal map app fails: no signal, cold hands in gloves, a battery at 9%. The rules come from designing for cars, where people also have a few seconds to look and a lot else going on.</p>
+      </div>
+    </header>
+
+    <section class="stage grid4" aria-label="Trail card">
+      <div class="device">
+        <div class="phone" id="phone">
+          <div class="bar"><span id="clock">--:--</span><span id="state">Packing for offline…</span></div>
+          <div class="screen" id="screen" aria-live="polite">
+            <div class="card" id="card-way" role="tabpanel" aria-labelledby="tab-way">
+              <p class="k" id="way-k">To the top</p>
+              <p class="huge" id="way-dist">–</p>
+              <p class="mid" id="way-line"></p>
+              <div class="dir" id="way-dir"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30" /><text x="32" y="13" text-anchor="middle">N</text><path id="arrow" d="M32 16 L42 44 L32 38 L22 44 Z" /></svg><span id="dir-text"></span></div>
+              <canvas class="profile" id="profile" aria-hidden="true"></canvas>
+              <button class="big-btn" type="button" id="turn">I’m heading back</button>
+            </div>
+            <div class="card card-map" id="card-map" role="tabpanel" aria-labelledby="tab-map" hidden>
+              <canvas id="mapview" aria-label="Map of the route with your position"></canvas>
+              <p class="note" id="map-note"></p>
+            </div>
+            <div class="card" id="card-light" role="tabpanel" aria-labelledby="tab-light" hidden>
+              <p class="k" id="light-k">Sunset in</p>
+              <p class="huge" id="light-left">–</p>
+              <p class="mid" id="light-at"></p>
+              <p class="mid" id="light-back"></p>
+            </div>
+            <div class="card" id="card-help" role="tabpanel" aria-labelledby="tab-help" hidden>
+              <p class="k">You are at</p>
+              <p class="huge" id="help-pos" style="font-size: clamp(40px, 12cqi, 56px)">–</p>
+              <p class="mid" id="help-line"></p>
+              <a class="big-btn" id="sms" href="sms:">Text my position</a>
+              <a class="big-btn" href="tel:112">Call 112</a>
+              <p class="k" style="font-size: 16px">112 reaches emergency services across Europe and in many other countries. A text often gets through when calls and data don’t.</p>
+            </div>
+          </div>
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" id="tab-way" aria-controls="card-way" aria-selected="true">Way</button>
+            <button type="button" role="tab" id="tab-map" aria-controls="card-map" aria-selected="false">Map</button>
+            <button type="button" role="tab" id="tab-light" aria-controls="card-light" aria-selected="false">Light</button>
+            <button type="button" role="tab" id="tab-help" aria-controls="card-help" aria-selected="false">Help</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="sim">
+          <p class="label">Try it on the sample</p>
+          <p class="muted" id="sample-note">The real Reinebringen trail above Reine in Lofoten: one kilometre and 460 metres straight up, then the same way down. Move along it, step off it, and change the conditions.</p>
+          <div class="row">
+            <label class="muted" for="walk">Where you are on the walk</label>
+            <input id="walk" type="range" min="0" max="1000" step="1" value="300" />
+          </div>
+          <div class="chips">
+            <button class="chip" type="button" id="off" aria-pressed="false">Step off the route</button>
+            <button class="chip" type="button" id="night" aria-pressed="false">Night</button>
+            <button class="chip" type="button" id="saver" aria-pressed="false">Battery saver</button>
+          </div>
+          <div class="chips">
+            <label class="chip" for="gpx">Use your own GPX</label>
+            <input class="sr" id="gpx" type="file" accept=".gpx,application/gpx+xml" />
+            <button class="chip" type="button" id="live" aria-pressed="false">Use my location</button>
+            <button class="chip" type="button" id="sample" hidden>Back to the sample</button>
+          </div>
+          <p class="status" id="status" aria-live="polite"></p>
+        </div>
+        <p class="credit" id="credit">Route: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors (ODbL). Elevation: <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">Terrain Tiles</a> by Mapzen on AWS Open Data. Walking times by Naismith’s rule; sunset by NOAA’s formula.</p>
+      </div>
+      <div class="packmap" aria-hidden="true"><canvas id="packmap"></canvas></div>
+    </section>
+
+    <section class="what grid4" aria-label="How it works">
+      <p class="label">From the car to the mountain</p>
+      <ul>
+        <li><span class="label">Two-second glances</span><span class="muted">Like a dashboard, each card answers one question in one big number: how far, how long until dark, where am I. Everything else is smaller and can wait.</span></li>
+        <li><span class="label">Made for gloves</span><span class="muted">Targets are at least 72 points tall and there’s nothing to pinch, swipe or hold. Tap anywhere on a card for the next one. Night turns it red, to keep your eyes used to the dark.</span></li>
+        <li><span class="label">Packed, not streamed</span><span class="muted">While you still have signal, the route, its heights, the sunset and a picture of the map are worked out once and kept on the phone. After that it needs no network at all.</span></li>
+        <li><span class="label">Easy on the battery</span><span class="muted">Black screen, no animation, and a battery saver that asks for your position once a minute instead of all the time, and says how old the last fix is. Your position stays on the phone.</span></li>
+      </ul>
+    </section>
+  </main>
+
+  <script src="map.js"></script>
+  <script src="trail.js"></script>
+  <script src="sample-route.js"></script>
+  <script src="card.js"></script>
+</body>
+</html>
